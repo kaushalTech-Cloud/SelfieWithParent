@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dashboard | Selfie with Parent Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-side" aria-label="Admin menu">
+      <a class="brand" href="index.html"><img src="img/logo-light.svg" alt="Selfie with Parent" height="40"><small>Admin</small></a>
+      <a class="link active" href="#dash"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a class="link" href="#queue"><i class="bi bi-inbox"></i> Review queue <span class="badge rounded-pill" id="queueBadge">0</span></a>
+      <a class="link" href="#winners"><i class="bi bi-trophy"></i> Winners</a>
+      <a class="link" href="#activity"><i class="bi bi-graph-up"></i> Activity</a>
+      <div class="side-bottom">
+        <a class="link" id="publicLink" href="#" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View public site</a>
+        <a class="link" href="login.html"><i class="bi bi-box-arrow-left"></i> Sign out</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-top" id="dash">
+        <div>
+          <h1>Good morning, Team</h1>
+          <span class="design-flag"><i class="bi bi-brush"></i> Design preview — sample data, actions are not saved</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <input class="form-control" type="search" placeholder="Search by name or reference" aria-label="Search submissions" id="adminSearch" style="min-width:240px">
+          <span class="user-chip"><span class="avatar" aria-hidden="true">AD</span> Admin</span>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="kpi"><small>Waiting for review</small><div class="v" id="kPending">0</div><span class="d warn">Oldest: 15 hours</span></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi"><small>Approved this week</small><div class="v">1,284</div><span class="d up"><i class="bi bi-arrow-up"></i> 18% vs last week</span></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi"><small>Videos received</small><div class="v">212</div><span class="d up"><i class="bi bi-arrow-up"></i> 32%</span></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi"><small>Volunteer sign-ups</small><div class="v">96</div><span class="d up"><i class="bi bi-arrow-up"></i> 9%</span></div></div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-xl-8">
+          <section class="panel" id="queue">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <h2 class="mb-0">Review queue</h2>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Filter by type">
+                <button class="btn btn-outline-secondary active" data-kind="all" type="button">All</button>
+                <button class="btn btn-outline-secondary" data-kind="video" type="button">Has video</button>
+                <button class="btn btn-outline-secondary" data-kind="Family" type="button">Family</button>
+                <button class="btn btn-outline-secondary" data-kind="AI-made" type="button">AI-made</button>
+              </div>
+            </div>
+            <div id="queueList"></div>
+            <p class="text-muted small mt-3 mb-0" id="queueEmpty" hidden><i class="bi bi-check2-all"></i> All caught up — nothing waiting for review.</p>
+          </section>
+        </div>
+
+        <div class="col-xl-4">
+          <section class="panel mb-4" id="activity">
+            <h2>Uploads, last 7 days</h2>
+            <div class="bars" id="bars"></div>
+            <div style="height:24px"></div>
+          </section>
+
+          <section class="panel" id="winners">
+            <h2>Pick this year's winners</h2>
+            <p class="small text-muted">Choose from approved and featured selfies.</p>
+            <div class="mb-2"><label class="form-label small fw-semibold" for="w1">🥇 1st place</label><select class="form-select form-select-sm winner-pick" id="w1"></select></div>
+            <div class="mb-2"><label class="form-label small fw-semibold" for="w2">🥈 2nd place</label><select class="form-select form-select-sm winner-pick" id="w2"></select></div>
+            <div class="mb-3"><label class="form-label small fw-semibold" for="w3">🥉 3rd place</label><select class="form-select form-select-sm winner-pick" id="w3"></select></div>
+            <button class="btn btn-accent btn-sm w-100" type="button" id="announce">Preview announcement</button>
+            <div class="small mt-2" id="announceNote" role="status"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="rejectTitle">Reject submission</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <label class="form-label" for="rejectReason">Reason (sent to the uploader)</label>
+          <select class="form-select mb-2" id="rejectReason">
+            <option>Faces are not clearly visible</option>
+            <option>Photo looks heavily edited</option>
+            <option>Consent not confirmed for everyone in the photo</option>
+            <option>Not related to the campaign</option>
+            <option>Duplicate submission</option>
+          </select>
+          <textarea class="form-control" rows="2" placeholder="Optional note" aria-label="Optional note"></textarea>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal" type="button">Cancel</button><button class="btn btn-danger" type="button" id="confirmReject">Reject</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
