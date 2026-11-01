@@ -1,0 +1,51 @@
+<header class="page-hero memorial">
+  <app-donate-pill />
+  <div class="container">
+    <span class="eyebrow">{{ 'In loving memory' | t }}</span>
+    <h1>{{ 'Memory Wall' | t }}</h1>
+    <p class="lead">{{ 'A quiet place to remember the parents and grandparents who shaped us. Light a candle for someone, or add a tribute of your own.' | t }}</p>
+  </div>
+</header>
+
+<main id="main" class="pb-5" tabindex="-1">
+  <div class="container">
+    <div class="card-soft lift mb-5 d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <div class="small text-muted">{{ 'Candles lit on this wall' | t }}</div>
+        <div class="pledge-count text-dark">{{ count(candleTotal()) }}</div>
+      </div>
+      <a class="btn btn-accent" routerLink="/upload" [queryParams]="{ kind: 'memory' }"><i class="bi bi-flower1"></i> {{ 'Add a tribute' | t }}</a>
+    </div>
+    @if (error()) { <div class="alert alert-danger py-2 small" role="alert">{{ error() }}</div> }
+
+    @if (state() === 'loading') {
+      <p class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> {{ 'Loading…' | t }}</p>
+    } @else if (state() === 'error') {
+      <p class="text-center text-muted py-4">{{ "We couldn't load the selfies. Please try again in a moment." | t }}</p>
+    } @else {
+      <div class="row g-4">
+        @for (m of tributes(); track m.publicId) {
+          <div class="col-md-6 col-lg-4">
+            <article class="memory-card">
+              @if (m.photoId) { <img [src]="file(m.photoId)" [alt]="m.parentName" loading="lazy"> }
+              <div class="body">
+                <h3>{{ m.parentName }}</h3>
+                <span class="years">{{ (m.relation ?? '') | t }}@if (m.memoryYear) { · {{ 'remembered since {year}' | t: { year: m.memoryYear } }} }</span>
+                @if (m.message) { <blockquote>“{{ m.message }}”</blockquote> }
+                <span class="by">— {{ m.firstName }}@if (m.place) { , {{ m.place }} }</span>
+                <button type="button" class="candle-btn" [class.lit]="lit(m)" [attr.aria-pressed]="lit(m)" (click)="toggle(m)" [disabled]="busy() === m.publicId">
+                  <span class="flame" aria-hidden="true"></span> <span class="lbl">{{ (lit(m) ? 'Candle lit' : 'Light a candle') | t }} · {{ count(m.candles) }}</span>
+                </button>
+              </div>
+            </article>
+          </div>
+        } @empty {
+          <p class="text-center text-muted py-4">{{ 'No tributes here yet.' | t }}</p>
+        }
+      </div>
+      @if (tributes().length < total()) {
+        <div class="text-center mt-4"><button class="btn btn-outline-accent" type="button" (click)="more()">{{ 'Show more' | t }}</button></div>
+      }
+    }
+  </div>
+</main>

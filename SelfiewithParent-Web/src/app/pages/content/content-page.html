@@ -1,0 +1,354 @@
+@if (state() === 'loading') {
+  <main id="main" class="section text-center" tabindex="-1" aria-busy="true">
+    <div class="container py-5"><span class="spinner-border text-secondary" role="status"><span class="visually-hidden">{{ 'Loading…' | t }}</span></span></div>
+  </main>
+} @else if (state() === 'missing' || state() === 'error') {
+  <main id="main" class="section status-page" tabindex="-1">
+    <div class="container">
+      <div class="status-card">
+        @if (state() === 'missing') {
+          <div class="status-icon" aria-hidden="true"><i class="bi bi-signpost-split"></i></div>
+          <h1 class="section-title">{{ 'Page not found' | t }}</h1>
+          <p class="text-muted">{{ "The page you're looking for doesn't exist or has moved." | t }}</p>
+        } @else {
+          <div class="status-icon teal" aria-hidden="true"><i class="bi bi-wifi-off"></i></div>
+          <h1 class="section-title">{{ "We couldn't load this page" | t }}</h1>
+          <p class="text-muted">{{ 'Please check your connection and try again.' | t }}</p>
+        }
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+          <a class="btn btn-accent" routerLink="/"><i class="bi bi-house"></i> {{ 'Home' | t }}</a>
+          <a class="btn btn-outline-accent" routerLink="/selfies"><i class="bi bi-images"></i> {{ 'Latest Selfies' | t }}</a>
+        </div>
+      </div>
+    </div>
+  </main>
+} @else if (page(); as p) {
+  <main id="main" tabindex="-1">
+    @for (b of p.blocks; track b.id; let i = $index) {
+      @let afterTabs = i > 0 && p.blocks[i - 1].type === 'tabs';
+      @switch (b.type) {
+
+        @case ('hero') {
+          <header class="page-hero">
+            <app-donate-pill />
+            <i class="bi bi-heart-fill ph-spark s1" aria-hidden="true"></i><i class="bi bi-stars ph-spark s2" aria-hidden="true"></i><i class="bi bi-camera-fill ph-spark s3" aria-hidden="true"></i>
+            <div class="container">
+              @if (b['eyebrow']) { <span class="eyebrow"><swp-text [value]="b['eyebrow']" /></span> }
+              <h1><swp-text [value]="b['title']" />@if (b['highlight']) { {{ ' ' }}<em><swp-text [value]="b['highlight']" /></em> }</h1>
+              @if (b['lead']) { <p class="lead"><swp-text [value]="b['lead']" /></p> }
+            </div>
+          </header>
+        }
+
+        @case ('tabs') {
+          <nav class="about-tabs" [attr.aria-label]="'More about Selfie with Parent' | t">
+            @for (t of b['items'] ?? []; track t.id) {
+              <a [siteLink]="t.url" [attr.aria-current]="isCurrent(t.url) ? 'page' : null">
+                @if (t.icon) { <i class="bi" [class]="t.icon" aria-hidden="true"></i> } <swp-text [value]="t.label" />
+              </a>
+            }
+          </nav>
+        }
+
+        @case ('text') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <div class="row g-5 align-items-center">
+                <div class="reveal" [class]="b['facts']?.length ? 'col-lg-7' : 'col-lg-9 mx-auto'">
+                  @if (b['kicker']) { <span class="kicker"><swp-text [value]="b['kicker']" /></span> }
+                  @if (b['heading']) { <h2 class="section-title"><swp-text [value]="b['heading']" /></h2> }
+                  @for (para of b['paragraphs'] ?? []; track para.id; let lastPara = $last) {
+                    <p class="about-lead" [class.mb-0]="lastPara"><swp-text [value]="para.text" /></p>
+                  }
+                </div>
+                @if (b['facts']?.length) {
+                  <div class="col-lg-5 reveal">
+                    <ul class="fact-list">
+                      @for (f of b['facts']; track f.id) { <li>@if (f.icon) { <i class="bi" [class]="f.icon" aria-hidden="true"></i> } <swp-text [value]="f.text" /></li> }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('cards') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b }" />
+              @switch (b['layout']) {
+                @case ('bento') {
+                  <div class="bento">
+                    @for (c of b['items'] ?? []; track c.id) {
+                      <div class="reveal" [class]="'b-' + (c.width || 12)">
+                        <div class="tile-card" [class.dark]="c.style === 'dark'" [class.gold]="c.style === 'gold'">
+                          @if (c.icon) { <span class="tile-icon"><i class="bi" [class]="c.icon" aria-hidden="true"></i></span> }
+                          @if (c.title) { <h3><swp-text [value]="c.title" /></h3> }
+                          @if (c.text) { <p><swp-text [value]="c.text" /></p> }
+                          @if (c.url) { <a class="btn btn-sm mt-3" [class.btn-white]="c.style === 'dark'" [class.btn-accent]="c.style !== 'dark'" [siteLink]="c.url"><swp-text [value]="c.linkLabel || c.title" /></a> }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @case ('links') {
+                  <div class="row g-4">
+                    @for (c of b['items'] ?? []; track c.id) {
+                      <div class="reveal" [class]="cols(b, 3)">
+                        <a class="go-card" [siteLink]="c.url">
+                          @if (c.icon) { <span class="tile-icon"><i class="bi" [class]="c.icon" aria-hidden="true"></i></span> }
+                          <h3><swp-text [value]="c.title" /></h3>
+                          @if (c.text) { <p><swp-text [value]="c.text" /></p> }
+                          @if (c.linkLabel) { <span class="go"><swp-text [value]="c.linkLabel" /> <i class="bi bi-arrow-right" aria-hidden="true"></i></span> }
+                        </a>
+                      </div>
+                    }
+                  </div>
+                }
+                @case ('programmes') {
+                  <div class="row g-4">
+                    @for (c of b['items'] ?? []; track c.id) {
+                      <div class="reveal" [class]="cols(b, 2)">
+                        <div class="programme">
+                          @if (c.icon) { <span class="p-icon"><i class="bi" [class]="c.icon" aria-hidden="true"></i></span> }
+                          <div>
+                            <h3><swp-text [value]="c.title" /></h3>
+                            @if (c.text) { <p><swp-text [value]="c.text" /></p> }
+                            @if (c.bullets?.length) { <ul>@for (x of c.bullets; track x.id) { <li><swp-text [value]="x.text" /></li> }</ul> }
+                            @if (c.url) { <a class="btn btn-accent btn-sm mt-2" [siteLink]="c.url"><swp-text [value]="c.linkLabel || c.title" /></a> }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @case ('activities') {
+                  <div class="row g-3">
+                    @for (c of b['items'] ?? []; track c.id) {
+                      <div class="reveal" [class]="cols(b, 3) === 'col-md-4' ? 'col-md-6 col-lg-4' : cols(b, 3)">
+                        <a class="activity" [siteLink]="c.url">
+                          @if (c.icon) { <i class="bi" [class]="c.icon" aria-hidden="true"></i> }
+                          <div><h3><swp-text [value]="c.title" /></h3>@if (c.text) { <p><swp-text [value]="c.text" /></p> }</div>
+                        </a>
+                      </div>
+                    }
+                  </div>
+                }
+                @default {
+                  <div class="row g-4">
+                    @for (c of b['items'] ?? []; track c.id) {
+                      <div class="reveal" [class]="cols(b, 3)">
+                        <div class="tile-card">
+                          @if (c.icon) { <span class="tile-icon"><i class="bi" [class]="c.icon" aria-hidden="true"></i></span> }
+                          @if (c.title) { <h3><swp-text [value]="c.title" /></h3> }
+                          @if (c.text) { <p><swp-text [value]="c.text" /></p> }
+                          @if (c.url) { <a class="btn btn-accent btn-sm mt-3" [siteLink]="c.url"><swp-text [value]="c.linkLabel || c.title" /></a> }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </section>
+        }
+
+        @case ('steps') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b }" />
+              @if (b['style'] === 'flow') {
+                <div class="change-flow reveal">
+                  @for (s of b['items'] ?? []; track s.id) {
+                    <div class="change-step">@if (s.icon) { <i class="bi" [class]="s.icon" aria-hidden="true"></i> }<h3><swp-text [value]="s.title" /></h3>@if (s.text) { <p><swp-text [value]="s.text" /></p> }</div>
+                  }
+                </div>
+              } @else {
+                <div class="steps">
+                  @for (s of b['items'] ?? []; track s.id) {
+                    <div class="step-card reveal"><h3><swp-text [value]="s.title" /></h3>@if (s.text) { <p><swp-text [value]="s.text" /></p> }</div>
+                  }
+                </div>
+              }
+              <ng-container *ngTemplateOutlet="buttons; context: { $implicit: b['buttons'], onDark: false }" />
+            </div>
+          </section>
+        }
+
+        @case ('timeline') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b }" />
+              <div class="timeline">
+                <span class="tl-progress" aria-hidden="true"></span>
+                @for (m of b['items'] ?? []; track m.id) {
+                  <div class="tl-item reveal" [class.next]="m.upcoming">
+                    <span class="tl-dot">@if (m.icon) { <i class="bi" [class]="m.icon" aria-hidden="true"></i> }</span>
+                    <div class="tl-card">
+                      @if (m.year) { <span class="tl-year" [class.ph]="isPh(m.year)">{{ m.year }}</span> }
+                      <h3><swp-text [value]="m.title" /></h3>
+                      @if (m.text) { <p><swp-text [value]="m.text" /></p> }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('stats') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container text-center">
+              @if (b['note']) { <span class="design-flag"><i class="bi bi-brush" aria-hidden="true"></i> <swp-text [value]="b['note']" /></span> }
+              <div class="number-strip mt-3">
+                @for (n of b['items'] ?? []; track n.id) {
+                  <div>
+                    <div class="n">
+                      @if (isNumber(n.value)) { <span [attr.data-count]="n.value">{{ n.value | number }}</span> } @else { <swp-text [value]="n.value" /> }{{ n.suffix ?? '' }}
+                    </div>
+                    <small><swp-text [value]="n.label" /></small>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('faq') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container" style="max-width: 860px">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b, small: true }" />
+              <div class="accordion faq">
+                @for (q of b['items'] ?? []; track q.id; let qi = $index) {
+                  @let open = faqOpen(b, q.id, qi);
+                  <div class="accordion-item">
+                    <h3 class="accordion-header">
+                      <button class="accordion-button" [class.collapsed]="!open" type="button" [attr.aria-expanded]="open"
+                              [attr.aria-controls]="'faq-' + q.id" (click)="toggleFaq(b, q.id, qi)"><swp-text [value]="q.question" /></button>
+                    </h3>
+                    <div class="accordion-body" [id]="'faq-' + q.id" [hidden]="!open"><swp-text [value]="q.answer" /></div>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('quote') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container reveal">
+              <blockquote class="pull-quote">
+                <swp-text [value]="b['text']" />
+                @if (b['cite']) { <cite>— <swp-text [value]="b['cite']" /></cite> }
+              </blockquote>
+            </div>
+          </section>
+        }
+
+        @case ('profile') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              @if (b['note']) { <div class="text-center mb-4"><span class="design-flag"><i class="bi bi-brush" aria-hidden="true"></i> <swp-text [value]="b['note']" /></span></div> }
+              <div class="profile-card">
+                <div class="portrait reveal">
+                  @if (b['image']) { <img [src]="img(b['image'])" [alt]="b['imageAlt'] ?? ''"> }
+                  @if (b['badge']) { <span class="badge-float"><i class="bi bi-camera" aria-hidden="true"></i> <swp-text [value]="b['badge']" /></span> }
+                </div>
+                <div class="reveal">
+                  @if (b['role']) { <span class="profile-role"><swp-text [value]="b['role']" /></span> }
+                  @if (b['name']) { <h2 class="profile-name"><swp-text [value]="b['name']" /></h2> }
+                  @if (b['intro']) { <p class="about-lead"><swp-text [value]="b['intro']" /></p> }
+                  @if (b['facts']?.length) {
+                    <div class="glance">
+                      @for (f of b['facts']; track f.id) { <div><small><swp-text [value]="f.label" /></small><strong [class.ph]="isPh(f.value)">{{ f.value }}</strong></div> }
+                    </div>
+                  }
+                  @if (b['socials']?.length) {
+                    <div class="social-row">
+                      @for (s of b['socials']; track s.id) {
+                        @if (s.url) {
+                          <a [siteLink]="s.url" [attr.aria-label]="s.label" [title]="s.label"><i class="bi" [class]="s.icon || 'bi-link-45deg'" aria-hidden="true"></i></a>
+                        } @else {
+                          <span class="social-placeholder" [title]="s.label" [attr.aria-label]="s.label"><i class="bi" [class]="s.icon || 'bi-link-45deg'" aria-hidden="true"></i></span>
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('letter') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b }" />
+              <article class="letter reveal">
+                @for (para of b['paragraphs'] ?? []; track para.id) {
+                  @if (isPh(para.text)) { <p class="ph">{{ para.text }}</p> } @else { <p><swp-text [value]="para.text" /></p> }
+                }
+                @if (b['signature']) { <p class="sign"><swp-text [value]="b['signature']" /></p> }
+              </article>
+            </div>
+          </section>
+        }
+
+        @case ('gallery') {
+          <section class="about-section" [class.soft]="b['background'] === 'soft'" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <ng-container *ngTemplateOutlet="sectionHead; context: { $implicit: b }" />
+              <div class="photo-strip">
+                @for (g of b['items'] ?? []; track g.id) {
+                  <figure class="reveal">
+                    @if (g.image) { <img [src]="img(g.image)" [alt]="g.alt ?? ''" loading="lazy"> }
+                    @if (g.caption) { <figcaption><swp-text [value]="g.caption" /></figcaption> }
+                  </figure>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
+        @case ('cta') {
+          <section class="about-section" [class.pt-2]="afterTabs" [attr.id]="b['anchor'] || null">
+            <div class="container">
+              <div class="cta-panel reveal">
+                @if (b['title']) { <h2><swp-text [value]="b['title']" /></h2> }
+                @if (b['text']) { <p><swp-text [value]="b['text']" /></p> }
+                <ng-container *ngTemplateOutlet="buttons; context: { $implicit: b['buttons'], onDark: true }" />
+              </div>
+            </div>
+          </section>
+        }
+      }
+    }
+  </main>
+}
+
+<!-- Small heading + heading (+ introduction / note) above a section -->
+<ng-template #sectionHead let-b let-small="small">
+  @if (b['kicker'] || b['heading'] || b['intro'] || b['note']) {
+    <div class="text-center reveal" [class.mb-5]="!small" [class.mb-4]="small">
+      @if (b['kicker']) { <span class="kicker"><swp-text [value]="b['kicker']" /></span> }
+      @if (b['heading']) { <h2 class="section-title"><swp-text [value]="b['heading']" /></h2> }
+      @if (b['intro']) { <p class="about-lead mx-auto"><swp-text [value]="b['intro']" /></p> }
+      @if (b['note']) { <span class="design-flag mt-2"><i class="bi bi-brush" aria-hidden="true"></i> <swp-text [value]="b['note']" /></span> }
+    </div>
+  }
+</ng-template>
+
+<!-- Buttons under steps / in a call to action -->
+<ng-template #buttons let-list let-onDark="onDark">
+  @if (list?.length) {
+    <div class="d-flex flex-wrap gap-2 justify-content-center" [class.mt-4]="!onDark">
+      @for (btn of list; track btn.id) {
+        <a class="btn" [class.btn-accent]="!onDark && btn.style !== 'secondary'" [class.btn-outline-secondary]="!onDark && btn.style === 'secondary'"
+           [class.btn-white]="onDark && btn.style !== 'secondary'" [class.btn-ghost-light]="onDark && btn.style === 'secondary'" [siteLink]="btn.url">
+          @if (btn.icon) { <i class="bi" [class]="btn.icon" aria-hidden="true"></i> } <swp-text [value]="btn.label" />
+        </a>
+      }
+    </div>
+  }
+</ng-template>

@@ -1,0 +1,130 @@
+<main id="main" class="selfies-page" tabindex="-1">
+  <div class="container">
+    <!-- Share your own -->
+    <section class="frame-cta">
+      <app-donate-pill />
+      <div class="cta-text">
+        <span class="cta-eyebrow"><i class="bi bi-heart-fill"></i> {{ current().label | t }}</span>
+        <h1>{{ 'Share a moment together' | t }}</h1>
+        <p>{{ 'Three quick steps. Our team reviews every photo before it appears in the gallery.' | t }}</p>
+        <div class="cta-buttons">
+          <a class="btn btn-light btn-lg cta-btn" routerLink="/upload"><i class="bi bi-upload"></i> {{ 'Share your selfie' | t }}</a>
+          <a class="btn btn-ghost-light btn-lg" routerLink="/upload" [queryParams]="{ media: 'video' }"><i class="bi bi-camera-video"></i> {{ 'Upload a video' | t }}</a>
+        </div>
+      </div>
+      <div class="cta-art" aria-hidden="true">
+        @for (s of (data()?.items ?? []).slice(0, 3); track s.publicId) {
+          @if (s.photoId) { <img [src]="file(s.photoId)" alt=""> }
+        } @empty { <i class="bi bi-camera-fill"></i> }
+      </div>
+    </section>
+
+    <!-- Category tabs -->
+    <div class="cat-bar">
+      <div class="cat-tabs" role="tablist" [attr.aria-label]="'Selfie categories' | t">
+        @for (t of tabs; track t.id) {
+          <a routerLink="/selfies" [queryParams]="{ tab: t.id }" role="tab" [class.active]="t.id === tab()" [attr.aria-selected]="t.id === tab()">
+            <i class="bi" [class]="t.icon"></i> {{ t.label | t }} <span class="badge rounded-pill">{{ data()?.counts?.[t.id] ?? 0 }}</span>
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="grid-head">
+      <h2 class="grid-title">{{ current().label | t }}</h2>
+      <span class="grid-count">{{ showing() }}</span>
+    </div>
+
+    @if (state() === 'loading') {
+      <p class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm"></span> {{ 'Loading…' | t }}</p>
+    } @else if (state() === 'error') {
+      <p class="text-center text-muted py-5">{{ "We couldn't load the selfies. Please try again in a moment." | t }}</p>
+    } @else {
+      <div class="row g-3 g-md-4" aria-live="polite">
+        @for (s of data()?.items ?? []; track s.publicId) {
+          <div class="col-6 col-md-4 col-lg-3" [id]="'s-' + s.publicId">
+            <article class="selfie-tile">
+              <div class="tile-photo">
+                @if (s.photoId) {
+                  <a class="tile-link" [routerLink]="['/selfies', s.publicId]" [attr.aria-label]="title(s)"><img [src]="file(s.photoId)" [alt]="title(s)" loading="lazy"></a>
+                } @else {
+                  <button type="button" class="tile-link p-0 border-0 bg-transparent w-100" (click)="open(s, true)" [attr.aria-label]="title(s)">
+                    <video [src]="file(s.videoId) + '#t=0.5'" preload="metadata" muted playsinline aria-hidden="true"></video>
+                  </button>
+                }
+                @if (s.isWinner) { <span class="tile-tag tile-win"><i class="bi bi-trophy-fill"></i> {{ 'Winner' | t }}</span> }
+                @else if (s.kind === 'ai') { <span class="tile-tag">{{ 'AI' | t }}</span> }
+                @if (s.kind === 'memory') { <span class="tile-tag"><i class="bi bi-flower1"></i> {{ 'In loving memory' | t }}</span> }
+                <app-like-share class="photo-share" look="icon" [shareOnly]="true" [id]="s.publicId" [title]="title(s)" [path]="sharePath(s)"
+                                [image]="s.photoId ? file(s.photoId) : null" [video]="s.videoId ? file(s.videoId) : null" [caption]="s.message" />
+                @if (s.voiceId) { <span class="tile-tag tile-voice" [title]="'Has a voice note' | t"><i class="bi bi-mic-fill"></i><span class="visually-hidden">{{ 'Has a voice note' | t }}</span></span> }
+                @if (s.videoId) {
+                  <button type="button" class="tile-play" (click)="open(s, true)" [attr.aria-label]="'Play video' | t"><i class="bi bi-play-fill"></i></button>
+                }
+              </div>
+              <div class="tile-body">
+                <div class="tile-top"><h3>@if (s.photoId) { <a [routerLink]="['/selfies', s.publicId]">{{ title(s) }}</a> } @else { {{ title(s) }} }</h3></div>
+                @if (s.place) { <small class="tile-place"><i class="bi bi-geo-alt"></i> {{ s.place }}</small> }
+                @if (s.message) { <p class="tile-msg">“{{ s.message }}”</p> }
+                <div class="tile-foot">
+                <app-like-share class="d-block" [id]="s.publicId" [likes]="s.likes ?? 0" [title]="title(s)" [compact]="true"
+                                [path]="sharePath(s)" [image]="s.photoId ? file(s.photoId) : null"
+                                [video]="s.videoId ? file(s.videoId) : null" [caption]="s.message" />
+                @if (s.videoId) {
+                  <button class="btn btn-outline-accent btn-sm" type="button" (click)="open(s, true)"><i class="bi bi-play-circle"></i> {{ 'Watch' | t }}</button>
+                }
+                @if (s.photoId) {
+                  <a class="btn btn-outline-accent btn-sm" [class.btn-light]="!!s.videoId" [routerLink]="['/selfies', s.publicId]"><i class="bi bi-book"></i> {{ 'Read the story' | t }}</a>
+                }
+                </div>
+              </div>
+            </article>
+          </div>
+        } @empty {
+          <p class="text-center text-muted py-5">{{ 'No selfies here yet — be the first to share one!' | t }}</p>
+        }
+      </div>
+
+      @if (pages() > 1) {
+        <nav class="mt-5" [attr.aria-label]="'Pages' | t">
+          <ul class="pager">
+            <li>
+              @if (page() > 1) { <a routerLink="/selfies" [queryParams]="{ tab: tab(), page: page() - 1 }" [attr.aria-label]="'Previous' | t"><i class="bi bi-chevron-left"></i></a> }
+              @else { <span class="disabled"><i class="bi bi-chevron-left"></i></span> }
+            </li>
+            @for (p of pageList(); track $index) {
+              <li>
+                @if (p === null) { <span class="gap">…</span> }
+                @else if (p === page()) { <span class="current" aria-current="page">{{ p }}</span> }
+                @else { <a routerLink="/selfies" [queryParams]="{ tab: tab(), page: p }">{{ p }}</a> }
+              </li>
+            }
+            <li>
+              @if (page() < pages()) { <a routerLink="/selfies" [queryParams]="{ tab: tab(), page: page() + 1 }" [attr.aria-label]="'Next' | t"><i class="bi bi-chevron-right"></i></a> }
+              @else { <span class="disabled"><i class="bi bi-chevron-right"></i></span> }
+            </li>
+          </ul>
+        </nav>
+      }
+    }
+  </div>
+</main>
+
+<!-- Viewer: the photo or the video, with the message -->
+@if (viewing(); as v) {
+  <div class="viewer-backdrop" (click)="close()"></div>
+  <div class="viewer studio" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+    <div class="d-flex align-items-start gap-2 mb-2">
+      <div class="me-auto">
+        <h5 class="mb-0" id="viewerTitle">{{ title(v.item) }}</h5>
+        @if (v.item.place) { <small class="text-muted">{{ v.item.place }}</small> }
+      </div>
+      <button type="button" class="btn-close" (click)="close()" [attr.aria-label]="'Close' | t"></button>
+    </div>
+    <div class="player-wrap">
+      @if (v.video && v.item.videoId) { <video [src]="file(v.item.videoId)" controls autoplay playsinline preload="metadata"></video> }
+      @else { <img [src]="file(v.item.photoId)" [alt]="title(v.item)"> }
+    </div>
+    @if (v.item.message) { <p class="viewer-msg">“{{ v.item.message }}”</p> }
+  </div>
+}

@@ -1,0 +1,433 @@
+<header class="upload-hero">
+  <app-donate-pill />
+  <span class="uh-glow g1" aria-hidden="true"></span><span class="uh-glow g2" aria-hidden="true"></span>
+  <i class="bi bi-heart-fill uh-spark s1" aria-hidden="true"></i><i class="bi bi-stars uh-spark s2" aria-hidden="true"></i><i class="bi bi-camera-fill uh-spark s3" aria-hidden="true"></i>
+  <div class="container text-center text-white">
+    <span class="uh-eyebrow"><i class="bi bi-images"></i> {{ 'Join the gallery' | t }}</span>
+    <h1>{{ 'Share your' | t }} <em>{{ 'moment' | t }}</em></h1>
+    <p class="lead mx-auto">{{ 'Three quick steps. Our team reviews every photo before it appears in the gallery.' | t }}</p>
+    <ul class="uh-pills">
+      <li><i class="bi bi-gift"></i> {{ 'Free to share' | t }}</li>
+      <li><i class="bi bi-patch-check"></i> {{ 'Reviewed by our team' | t }}</li>
+      <li><i class="bi bi-shield-lock"></i> {{ 'Your privacy is protected' | t }}</li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="upload-main" tabindex="-1">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-9">
+        <div class="upload-card">
+          @if (done(); as d) {
+            <!-- Success -->
+            <div class="success" role="status">
+              <div class="success-icon"><i class="bi bi-heart-fill"></i></div>
+              <h2>{{ 'Thank you, {name}!' | t: { name: d.name } }}</h2>
+              <p>{{ 'Your selfie is in our review queue. It usually appears in the gallery within 48 hours.' | t }}</p>
+              <p class="ref">{{ 'Reference:' | t }} <strong>{{ d.reference }}</strong></p>
+              <!-- Family album: joined from an invite link, and "invite your brothers, sisters and cousins" -->
+              @if (joined(); as albumId) {
+                <p class="album-joined"><i class="bi bi-people-fill"></i> {{ "It's in the family album too." | t }} <a [routerLink]="['/albums', albumId]">{{ 'View the album' | t }}</a></p>
+              }
+              @if (joinError()) { <p class="small text-danger" role="alert">{{ joinError() }}</p> }
+              @if (canAlbum(d.kind) && !joining()) {
+                <div class="album-invite-wrap">
+                  <app-album-invite [selfieId]="d.selfieId" [parentName]="d.parentName"
+                    [album]="joined() && albumCode() ? { publicId: joined()!, inviteCode: albumCode()! } : null" />
+                </div>
+              }
+              <!-- What's next: the things visitors can make and do -->
+              <div class="next-steps">
+                <p class="next-title">{{ "What's next" | t }}</p>
+                <div class="next-grid">
+                  <div class="next-card">
+                    <span class="ni"><i class="bi bi-image"></i></span>
+                    <strong>{{ 'Photo frame & reel' | t }}</strong>
+                    <small>{{ 'When your selfie is approved, open it to make a photo frame or a reel.' | t }}</small>
+                  </div>
+                  @if (features.on('contest')) {
+                  <a class="next-card" routerLink="/contest">
+                    <span class="ni gold"><i class="bi bi-trophy"></i></span>
+                    <strong>{{ 'Photo of the Week' | t }}</strong>
+                    <small>{{ 'Collect hearts' | t }} · {{ 'Win a golden frame' | t }}</small>
+                  </a>
+                  }
+                  @if (features.on('family-tree')) {
+                  <a class="next-card" routerLink="/family-tree">
+                    <span class="ni teal"><i class="bi bi-diagram-3"></i></span>
+                    <strong>{{ 'Family tree' | t }}</strong>
+                    <small>{{ 'Build your family tree' | t }}</small>
+                  </a>
+                  }
+                </div>
+              </div>
+              <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                <a routerLink="/" class="btn btn-accent"><i class="bi bi-house"></i> {{ 'Home' | t }}</a>
+                <button type="button" class="btn btn-outline-accent" (click)="again()"><i class="bi bi-plus-lg"></i> {{ 'Share another' | t }}</button>
+              </div>
+            </div>
+          } @else {
+            <ol class="stepper" [attr.aria-label]="'Progress' | t">
+              @for (s of ['About you', 'Your photo', 'Review']; track s; let i = $index) {
+                <li [class.active]="step() === i + 1" [class.done]="step() > i + 1" [attr.aria-current]="step() === i + 1 ? 'step' : null"><span>@if (step() > i + 1) { <i class="bi bi-check-lg" aria-hidden="true"></i> } @else { {{ i + 1 }} }</span>{{ s | t }}</li>
+              }
+            </ol>
+
+            <form novalidate (ngSubmit)="submit()">
+              <!-- ===== Step 1: about you ===== -->
+              @if (step() === 1) {
+                <fieldset class="step active">
+                  <legend class="visually-hidden">{{ 'About you' | t }}</legend>
+                  @if (album(); as a) {
+                    <div class="kind-note family-note mt-0 mb-3"><i class="bi bi-people-fill"></i><div>{{ (a.parentName ? "You're adding your selfie to {name}'s family album." : "You're adding your selfie to a family album.") | t: { name: a.parentName ?? '' } }}</div></div>
+                  }
+                  @if (fromTree()) {
+                    <div class="kind-note family-note mt-0 mb-3"><i class="bi bi-diagram-3"></i><div>{{ 'Your family tree is attached as the family photo. Check the details, then continue.' | t }}</div></div>
+                  }
+                  <p class="step-label">{{ 'What kind of photo is it?' | t }}</p>
+                  <div class="type-cards" role="radiogroup" [attr.aria-label]="'Photo type' | t">
+                    @for (k of kinds; track k.code) {
+                      <label class="type-card">
+                        <input type="radio" name="kind" [value]="k.code" [(ngModel)]="form.kind">
+                        <i class="bi" [class]="k.icon"></i><strong>{{ k.title | t }}</strong><small>{{ k.hint | t }}</small>
+                      </label>
+                    }
+                  </div>
+                  @if (form.kind === 'ai') {
+                    <div class="kind-note">
+                      <i class="bi bi-lightbulb"></i>
+                      <div>
+                        <strong>{{ 'Tip for AI photos:' | t }}</strong> {{ 'start from a real photo of each of you, ask for a natural, warm family selfie, and avoid changing faces beyond recognition. We label AI photos in the gallery.' | t }}
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1" (click)="copyPrompt()">{{ (copied() ? 'Prompt copied' : 'Copy a sample prompt') | t }}</button>
+                      </div>
+                    </div>
+                  }
+
+                  <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                      <label class="form-label" for="yourName">{{ 'Your name' | t }} <b>*</b></label>
+                      <input class="form-control" id="yourName" name="yourName" maxlength="60" autocomplete="name" [(ngModel)]="form.yourName" [class.is-invalid]="errors()['yourName']">
+                      <div class="invalid-feedback">{{ 'Please tell us your name.' | t }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="parentName">{{ (family ? 'Family name' : "Parent / grandparent's name") | t }} <b>*</b></label>
+                      <input class="form-control" id="parentName" name="parentName" maxlength="60" [(ngModel)]="form.parentName" [class.is-invalid]="errors()['parentName']">
+                      <div class="invalid-feedback">{{ 'Please add their name.' | t }}</div>
+                    </div>
+                    @if (!family) {
+                      <div class="col-md-6">
+                        <label class="form-label" for="relation">{{ 'They are your…' | t }} <b>*</b></label>
+                        <select class="form-select" id="relation" name="relation" [(ngModel)]="form.relation" [class.is-invalid]="errors()['relation']">
+                          <option value="">{{ 'Choose one' | t }}</option>
+                          @for (r of relations; track r) { <option [value]="r">{{ r | t }}</option> }
+                        </select>
+                        <div class="invalid-feedback">{{ 'Please choose one.' | t }}</div>
+                      </div>
+                    } @else {
+                      <div class="col-md-6">
+                        <label class="form-label" for="familySize">{{ 'How many people are in it?' | t }} <b>*</b></label>
+                        <select class="form-select" id="familySize" name="familySize" [(ngModel)]="form.familySize" [class.is-invalid]="errors()['familySize']">
+                          <option value="">{{ 'Choose one' | t }}</option>
+                          @for (n of familySizes; track n) { <option [value]="n">{{ n === '11-15' ? '11–15' : n }}</option> }
+                        </select>
+                        <div class="invalid-feedback">{{ 'Please choose one.' | t }}</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="generations">{{ 'Generations in the picture' | t }}</label>
+                        <select class="form-select" id="generations" name="generations" [(ngModel)]="form.generations">
+                          <option value="">{{ 'Prefer not to say' | t }}</option>
+                          <option value="2">{{ '2 generations' | t }}</option>
+                          <option value="3">{{ '3 generations' | t }}</option>
+                          <option value="4+">{{ '4 or more generations' | t }}</option>
+                        </select>
+                      </div>
+                    }
+                    @if (form.kind === 'memory') {
+                      <div class="col-md-6">
+                        <label class="form-label" for="memoryYear">{{ 'Year they passed' | t }}</label>
+                        <select class="form-select" id="memoryYear" name="memoryYear" [(ngModel)]="form.memoryYear">
+                          <option value="">{{ 'Prefer not to say' | t }}</option>
+                          @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+                        </select>
+                      </div>
+                    }
+                    @if (placeKnown() && !errors()['country'] && !errors()['state']) {
+                    <div class="col-12">
+                      <div class="place-known"><i class="bi bi-geo-alt-fill"></i> <span>{{ place() }}</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-2" (click)="placeKnown.set(false)">{{ 'Change' | t }}</button></div>
+                    </div>
+                    } @else {
+                    <div class="col-md-6">
+                      <label class="form-label" for="country">{{ 'Country' | t }} <b>*</b></label>
+                      <select class="form-select" id="country" name="country" [(ngModel)]="form.countryCode" [class.is-invalid]="errors()['country']">
+                        @for (c of countries(); track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+                      </select>
+                      <div class="invalid-feedback">{{ 'Please choose your country.' | t }}</div>
+                    </div>
+                    @if (form.countryCode === 'IN') {
+                      <div class="col-md-6">
+                        <label class="form-label" for="state">{{ 'State / UT' | t }} <b>*</b></label>
+                        <select class="form-select" id="state" name="state" [(ngModel)]="form.stateName" [class.is-invalid]="errors()['state']">
+                          <option value="">{{ 'Choose state / UT' | t }}</option>
+                          @for (s of states; track s) { <option [value]="s">{{ s }}</option> }
+                        </select>
+                        <div class="invalid-feedback">{{ 'Please choose your state.' | t }}</div>
+                      </div>
+                    } @else {
+                      <div class="col-md-6">
+                        <label class="form-label" for="region">{{ 'State / region' | t }}</label>
+                        <input class="form-control" id="region" name="region" maxlength="60" [(ngModel)]="form.region">
+                      </div>
+                    }
+                    <div class="col-md-6">
+                      <label class="form-label" for="city">{{ 'City / village' | t }}</label>
+                      <input class="form-control" id="city" name="city" maxlength="60" autocomplete="address-level2" [(ngModel)]="form.city">
+                    </div>
+                    }
+                  </div>
+                  @if (errors()['markup']) { <div class="invalid-msg" role="alert">{{ "Text can't contain < or >." | t }}</div> }
+
+                  <!-- Age + parental consent (needed for under-18s under India's DPDP Act) -->
+                  <div class="age-check mt-4">
+                    <p class="step-label mb-2" id="ageLabel">{{ 'Are you 18 or older?' | t }} <b>*</b></p>
+                    <div class="d-flex flex-wrap gap-3" role="radiogroup" aria-labelledby="ageLabel">
+                      <label class="form-check"><input class="form-check-input" type="radio" name="adult" value="yes" [(ngModel)]="form.adult"> <span class="form-check-label">{{ 'Yes, I am 18 or older' | t }}</span></label>
+                      <label class="form-check"><input class="form-check-input" type="radio" name="adult" value="no" [(ngModel)]="form.adult"> <span class="form-check-label">{{ 'No, I am under 18' | t }}</span></label>
+                    </div>
+                    @if (errors()['adult']) { <div class="invalid-msg" role="alert">{{ 'Please tell us whether you are 18 or older.' | t }}</div> }
+                    @if (form.adult === 'no') {
+                      <div class="guardian-box mt-3">
+                        <p class="mb-2"><i class="bi bi-shield-check"></i> <strong>{{ 'A parent or guardian needs to approve this.' | t }}</strong> {{ 'Our team checks with them before anything is published.' | t }}</p>
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <label class="form-label" for="guardianName">{{ "Parent / guardian's name" | t }} <b>*</b></label>
+                            <input class="form-control" id="guardianName" name="guardianName" maxlength="60" [(ngModel)]="form.guardianName" [class.is-invalid]="errors()['guardianName']">
+                            <div class="invalid-feedback">{{ "Please add your parent or guardian's name." | t }}</div>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label" for="guardianMobile">{{ "Parent / guardian's mobile" | t }} <b>*</b></label>
+                            <div class="input-group" [class.is-invalid]="errors()['guardianMobile']">
+                              <app-dial-code-select id="guardianDial" [(value)]="form.guardianDial" />
+                              <input class="form-control" id="guardianMobile" name="guardianMobile" type="tel" inputmode="numeric" maxlength="16"
+                                     [(ngModel)]="form.guardianMobile" [class.is-invalid]="errors()['guardianMobile']">
+                            </div>
+                            @if (errors()['guardianMobile']) { <div class="invalid-msg">{{ 'Enter a valid mobile number.' | t }}</div> }
+                          </div>
+                          <div class="col-12">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="guardianConsent" name="guardianConsent" [(ngModel)]="form.guardianConsent" [class.is-invalid]="errors()['guardianConsent']">
+                              <label class="form-check-label" for="guardianConsent">{{ 'My parent or guardian is with me and agrees to this submission.' | t }} <b>*</b></label>
+                              <div class="invalid-feedback">{{ 'Your parent or guardian needs to agree.' | t }}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="step-actions">
+                    <span></span>
+                    <button type="button" class="btn btn-accent" (click)="next()">{{ 'Next: add photo' | t }} <i class="bi bi-arrow-right"></i></button>
+                  </div>
+                </fieldset>
+              }
+
+              <!-- ===== Step 2: photo / video ===== -->
+              @if (step() === 2) {
+                <fieldset class="step active">
+                  <legend class="visually-hidden">{{ 'Your photo' | t }}</legend>
+                  <div class="row g-4">
+                    <div class="col-md-7">
+                      @if (thenNow) {
+                        <div class="kind-note family-note"><i class="bi bi-arrow-left-right"></i><div>{{ 'Add the old photo, then the same picture taken today.' | t }}</div></div>
+                        <p class="step-label" id="thenLabel">{{ 'The old photo' | t }} <b>*</b></p>
+                        <ng-container [ngTemplateOutlet]="drop" [ngTemplateOutletContext]="{ slot: 'then', inputId: 'photoThen', labelId: 'thenLabel' }" />
+                        <div class="row g-2 mt-1">
+                          <div class="col-6">
+                            <label class="form-label small" for="thenYear">{{ 'Year of the old photo' | t }}</label>
+                            <input class="form-control form-control-sm" id="thenYear" name="thenYear" inputmode="numeric" maxlength="4" [placeholder]="'e.g. 1998' | t" [(ngModel)]="form.thenYear" [class.is-invalid]="errors()['years']">
+                          </div>
+                          <div class="col-6">
+                            <label class="form-label small" for="nowYear">{{ 'Year of the new photo' | t }}</label>
+                            <input class="form-control form-control-sm" id="nowYear" name="nowYear" inputmode="numeric" maxlength="4" [placeholder]="'e.g. 2026' | t" [(ngModel)]="form.nowYear" [class.is-invalid]="errors()['years']">
+                          </div>
+                        </div>
+                        @if (errors()['years']) { <div class="invalid-msg" role="alert">{{ "Check the years: the old photo's year can't be after the new one's." | t }}</div> }
+                        <div class="mb-4"></div>
+                      } @else if (family) {
+                        <div class="kind-note family-note"><i class="bi bi-people-fill"></i><div>{{ 'Add a family photo, a family video, or both. At least one is needed.' | t }}</div></div>
+                      } @else {
+                        <div class="media-toggle" role="radiogroup" [attr.aria-label]="'Share a photo or a video' | t">
+                          <label><input type="radio" name="media" value="photo" [checked]="media() === 'photo'" (change)="media.set('photo')"><span><i class="bi bi-image"></i> {{ 'Photo' | t }}</span></label>
+                          <label><input type="radio" name="media" value="video" [checked]="media() === 'video'" (change)="media.set('video')"><span><i class="bi bi-camera-video"></i> {{ 'Video' | t }}</span></label>
+                        </div>
+                      }
+
+                      @if (showVideo()) {
+                        <p class="step-label" id="videoLabel">{{ (family ? 'Family video' : 'Your video message') | t }} @if (!family) { <b>*</b> }</p>
+                        <ng-container [ngTemplateOutlet]="drop" [ngTemplateOutletContext]="{ slot: 'video', inputId: 'videoFile', labelId: 'videoLabel' }" />
+                      }
+                      @if (showPhoto()) {
+                        <p class="step-label" [class.mt-4]="family" id="mainPhotoLabel">{{ mainLabel() | t }} @if (!family) { <b>*</b> }</p>
+                        <ng-container [ngTemplateOutlet]="drop" [ngTemplateOutletContext]="{ slot: 'main', inputId: 'photoMain', labelId: 'mainPhotoLabel' }" />
+                        @if (form.kind === 'ai') {
+                          <p class="step-label mt-4" id="sourceLabel">{{ 'Original photo used for the AI image' | t }} <span class="text-muted fw-normal">{{ '(optional)' | t }}</span></p>
+                          <ng-container [ngTemplateOutlet]="drop" [ngTemplateOutletContext]="{ slot: 'source', inputId: 'photoSource', labelId: 'sourceLabel' }" />
+                        }
+                      }
+                    </div>
+                    <div class="col-md-5">
+                      <label class="step-label" for="message">{{ 'Your message' | t }}</label>
+                      <textarea class="form-control" id="message" name="message" rows="6" maxlength="300" [(ngModel)]="form.message" [class.is-invalid]="errors()['message']"
+                                [placeholder]="'One thing they taught you, a memory, or simply why you love them.' | t"></textarea>
+                      <div class="char-count"><span>{{ form.message.length }}</span>/300</div>
+                      @if (errors()['message']) { <div class="invalid-msg" role="alert">{{ "Text can't contain < or >." | t }}</div> }
+                      <div class="photo-tips">
+                        <p><i class="bi bi-check2-circle"></i> {{ 'Faces clearly visible' | t }}</p>
+                        <p><i class="bi bi-check2-circle"></i> {{ 'Good light, no heavy filters' | t }}</p>
+                        <p><i class="bi bi-check2-circle"></i> {{ 'Everyone in it is happy to be shared' | t }}</p>
+                      </div>
+                      @if (showVoice()) {
+                        <!-- Voice note: only with a photo or AI-made photo -->
+                        <div class="voice-rec">
+                          <p class="step-label mb-1"><i class="bi bi-mic"></i> {{ 'Add a voice note' | t }} <span class="text-muted fw-normal">{{ '(optional)' | t }}</span></p>
+                          <p class="small text-muted mb-2">{{ 'Let your parent or grandparent say a few words — a blessing, a memory, a message. Up to 60 seconds.' | t }}</p>
+                          @if (fileIn('voice'); as v) {
+                            <audio [src]="v.url" controls preload="metadata"></audio>
+                            <div class="row-line mt-1">
+                              <span class="small text-muted">{{ v.file.name }} · {{ sizeText(v.file.size) }}</span>
+                              <button type="button" class="btn btn-sm btn-link text-danger" (click)="clearFile('voice')">{{ 'Remove' | t }}</button>
+                            </div>
+                          } @else if (recording()) {
+                            <div class="row-line">
+                              <button type="button" class="btn btn-sm btn-danger" (click)="stopRecording()"><i class="bi bi-stop-fill"></i> {{ 'Stop' | t }}</button>
+                              <span class="rec-dot" aria-hidden="true"></span>
+                              <span class="small fw-semibold" role="timer">{{ timeText(recordSeconds()) }} / 1:00</span>
+                            </div>
+                          } @else {
+                            <div class="row-line">
+                              @if (canRecord()) {
+                                <button type="button" class="btn btn-sm btn-outline-accent" (click)="startRecording()"><i class="bi bi-mic-fill"></i> {{ 'Record voice note' | t }}</button>
+                              }
+                              <label class="btn btn-sm btn-link mb-0">
+                                <i class="bi bi-file-earmark-music"></i> {{ 'or choose an audio file' | t }}
+                                <input type="file" class="visually-hidden" accept="audio/*" (change)="pick('voice', $event)">
+                              </label>
+                            </div>
+                          }
+                          @if (errorIn('voice')) { <div class="invalid-msg" role="alert">{{ errorIn('voice') | t }}</div> }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <div class="step-actions">
+                    <button type="button" class="btn btn-light" (click)="go(1)"><i class="bi bi-arrow-left"></i> {{ 'Back' | t }}</button>
+                    <button type="button" class="btn btn-accent" (click)="next()">{{ 'Next: review' | t }} <i class="bi bi-arrow-right"></i></button>
+                  </div>
+                </fieldset>
+              }
+
+              <!-- ===== Step 3: review ===== -->
+              @if (step() === 3) {
+                <fieldset class="step active">
+                  <legend class="visually-hidden">{{ 'Review and submit' | t }}</legend>
+                  <div class="row g-4 align-items-start">
+                    <div class="col-md-5">
+                      <div class="review-photo" [class.has-both]="(previewPhoto() && previewVideo()) || (thenNow && fileIn('then'))">
+                        @if (thenNow && fileIn('then'); as old) { <img [src]="old.url" [alt]="'The old photo' | t" class="then-preview"> }
+                        @if (previewPhoto(); as src) { <img [src]="src" [alt]="'Your photo' | t"> }
+                        @if (previewVideo(); as src) { <video [src]="src" controls playsinline preload="metadata"></video> }
+                        <span class="review-tag">{{ kindLabel[form.kind] | t }}@if (previewVideo()) { · {{ 'Video' | t }} }</span>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <dl class="review-list">
+                        <dt>{{ 'Your name' | t }}</dt><dd>{{ form.yourName }}</dd>
+                        <dt>{{ (family ? 'Family name' : 'With') | t }}</dt>
+                        <dd>{{ form.parentName }}@if (!family) { ({{ form.relation | t }}) }@if (form.kind === 'memory' && form.memoryYear) { · {{ 'remembered since {year}' | t: { year: form.memoryYear } }} }</dd>
+                        @if (family) { <dt>{{ 'People' | t }}</dt><dd>{{ form.familySize }}@if (form.generations) { · {{ form.generations }} {{ 'generations' | t }} }</dd> }
+                        <dt>{{ 'From' | t }}</dt>
+                        <dd>{{ place() }}</dd>
+                        @if (form.adult === 'no') { <dt>{{ 'Parent / guardian' | t }}</dt><dd>{{ form.guardianName }}</dd> }
+                        <dt>{{ 'Message' | t }}</dt><dd>{{ form.message.trim() || ('—' | t) }}</dd>
+                        @if (form.kind === 'ai') { <dt>{{ 'Original photo' | t }}</dt><dd>{{ (files().source ? 'Attached' : 'Not added') | t }}</dd> }
+                        @if (thenNow) { <dt>{{ 'Years' | t }}</dt><dd>{{ form.thenYear || ('Then' | t) }} → {{ form.nowYear || ('Now' | t) }}</dd> }
+                        @if (showVoice()) {
+                          <dt>{{ 'Voice note' | t }}</dt>
+                          <dd>@if (fileIn('voice'); as v) { <audio [src]="v.url" controls preload="metadata" class="review-audio"></audio> } @else { {{ 'Not added' | t }} }</dd>
+                        }
+                      </dl>
+                      <button type="button" class="btn btn-link p-0" (click)="go(1)"><i class="bi bi-pencil"></i> {{ 'Edit details' | t }}</button>
+                    </div>
+                  </div>
+                  <div class="privacy-notice">
+                    <p class="fw-semibold mb-2"><i class="bi bi-lock"></i> {{ 'How we use your information' | t }}</p>
+                    <ul>
+                      <li><strong>{{ 'What we collect:' | t }}</strong> {{ 'your name, location, and the photo or video you share. Your account’s mobile and email are used if we need to contact you.' | t }}</li>
+                      <li><strong>{{ 'Why:' | t }}</strong> {{ 'to review your submission, show it in the gallery, and contact you about it. Your mobile and email are never shown publicly.' | t }}</li>
+                      <li><strong>{{ 'Your choice:' | t }}</strong> {{ 'you can ask us to remove your submission or delete your details at any time.' | t }}</li>
+                    </ul>
+                    <a routerLink="/privacy" target="_blank" class="small">{{ 'Read the full Privacy Policy' | t }}</a>
+                  </div>
+                  <div class="consents">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="cPermission" name="cPermission" [(ngModel)]="form.consentShown">
+                      <label class="form-check-label" for="cPermission">{{ 'Everyone in this photo (or their guardian) agrees to it being shown publicly.' | t }} <b>*</b></label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="cOwn" name="cOwn" [(ngModel)]="form.consentOwn">
+                      <label class="form-check-label" for="cOwn">{{ 'I took this photo or have the right to share it.' | t }} <b>*</b></label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="cTerms" name="cTerms" [(ngModel)]="form.consentTerms">
+                      <label class="form-check-label" for="cTerms">{{ 'I accept the' | t }} <a routerLink="/terms" target="_blank">{{ 'Terms' | t }}</a> {{ 'and' | t }} <a routerLink="/privacy" target="_blank">{{ 'Privacy Policy' | t }}</a>. <b>*</b></label>
+                    </div>
+                    @if (consentError()) { <div class="invalid-msg" role="alert">{{ 'Please tick all three boxes to continue.' | t }}</div> }
+                  </div>
+                  @for (e of apiErrors(); track e) { <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">{{ e }}</div> }
+                  @if (sending()) {
+                    <div class="progress mt-3" role="progressbar" [attr.aria-label]="'Uploading' | t" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100">
+                      <div class="progress-bar bg-accent" [style.width.%]="progress()">{{ progress() }}%</div>
+                    </div>
+                  }
+                  <div class="step-actions">
+                    <button type="button" class="btn btn-light" (click)="go(2)" [disabled]="sending()"><i class="bi bi-arrow-left"></i> {{ 'Back' | t }}</button>
+                    <button type="submit" class="btn btn-accent" [disabled]="sending()">
+                      @if (sending()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-send"></i> }
+                      {{ 'Submit selfie' | t }}
+                    </button>
+                  </div>
+                </fieldset>
+              }
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- One drop zone: click or drag a file; shows a preview with a remove button -->
+<ng-template #drop let-slot="slot" let-inputId="inputId" let-labelId="labelId">
+  @let picked = fileIn(slot);
+  <div class="dropzone" [class.small-dz]="slot === 'source'" [class.drag]="dragOver() === slot" [class.invalid]="!!errorIn(slot)"
+       tabindex="0" role="button" [attr.aria-labelledby]="labelId"
+       (click)="!picked && openPicker(inputId)" (keydown.enter)="!picked && openPicker(inputId)" (keydown.space)="$event.preventDefault(); !picked && openPicker(inputId)"
+       (dragover)="dragEnter(slot, $event)" (dragleave)="dragOver.set(null)" (drop)="dropFile(slot, $event)">
+    <input type="file" [id]="inputId" hidden [accept]="slot === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/jpeg,image/png,image/webp'" (change)="pick(slot, $event)">
+    @if (picked) {
+      @if (slot === 'video') { <video class="dz-video" [src]="picked.url" controls playsinline preload="metadata"></video> }
+      @else { <img class="dz-preview" [src]="picked.url" [alt]="'Selected photo preview' | t"> }
+      <button type="button" class="dz-remove" (click)="$event.stopPropagation(); clearFile(slot)" [attr.aria-label]="(slot === 'video' ? 'Remove video' : 'Remove photo') | t"><i class="bi bi-x-lg"></i></button>
+    } @else if (slot === 'video') {
+      <div class="dz-empty"><i class="bi bi-film"></i><strong>{{ 'Drag a video here' | t }}</strong><span>{{ 'or click to choose · MP4, WebM or MOV · up to 60 seconds · 50 MB' | t }}</span></div>
+    } @else if (slot === 'source') {
+      <div class="dz-empty"><i class="bi bi-image"></i><span>{{ 'Helps us verify the AI photo' | t }}</span></div>
+    } @else {
+      <div class="dz-empty"><i class="bi bi-cloud-arrow-up"></i><strong>{{ 'Drag a photo here' | t }}</strong><span>{{ 'or click to choose · JPG, PNG or WebP · up to 10 MB' | t }}</span></div>
+    }
+  </div>
+  @if (picked) { <div class="video-meta">{{ picked.file.name }} · {{ sizeText(picked.file.size) }}</div> }
+  @if (errorIn(slot)) { <div class="invalid-msg" role="alert">{{ errorIn(slot) | t }}</div> }
+</ng-template>

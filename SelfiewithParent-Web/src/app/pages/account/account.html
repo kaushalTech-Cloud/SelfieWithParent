@@ -1,0 +1,285 @@
+<main id="main" class="account-page" tabindex="-1">
+  <div class="container">
+    @if (auth.profile(); as p) {
+      <div class="account-head">
+        <div class="photo-box">
+          <div class="avatar-lg" aria-hidden="true">
+            @if (photo.url(); as src) { <img [src]="src" alt=""> } @else { {{ initials() }} }
+          </div>
+          <label class="photo-edit" [class.disabled]="photoBusy()" [title]="(photo.url() ? 'Change photo' : 'Add a photo') | t">
+            @if (photoBusy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-camera-fill"></i> }
+            <span class="visually-hidden">{{ (photo.url() ? 'Change photo' : 'Add a photo') | t }}</span>
+            <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="choosePhoto($event)" [disabled]="photoBusy()">
+          </label>
+        </div>
+        <div>
+          <h1 class="h3 mb-1">{{ p.fullName ? ('Hello, {name}' | t: { name: p.fullName.split(' ')[0] }) : ('My account' | t) }}</h1>
+          <div class="small text-muted">
+            @if (p.signUpMethod === 'Google') { {{ 'Signed in with Google' | t }} }
+            @else if (p.signUpMethod === 'Email') { {{ 'Signed in with email {e}' | t: { e: p.email ?? '' } }} }
+            @else { {{ 'Signed in with mobile {n}' | t: { n: p.mobileMasked ?? '' } }} }
+          </div>
+          @if (photo.url()) {
+            <button type="button" class="btn btn-link btn-sm p-0 text-danger" (click)="removePhoto()" [disabled]="photoBusy()">{{ 'Remove photo' | t }}</button>
+          }
+          @if (photoError()) { <div class="small text-danger" role="alert">{{ photoError() }}</div> }
+        </div>
+      </div>
+
+      @if (welcome()) {
+        <div class="welcome-box">
+          <i class="bi bi-stars"></i>
+          <div><strong>{{ 'Welcome! Just one step left.' | t }}</strong> {{ "Tell us a little about you — you'll only do this once, and every upload after this fills in by itself." | t }}</div>
+        </div>
+      }
+
+      <div class="account-layout" [class.with-nav]="!welcome()">
+        <!-- Left menu: one part of My account at a time (on phones, a row of tabs) -->
+        @if (!welcome()) {
+          <aside class="acc-nav" [attr.aria-label]="'My account' | t">
+            <p class="acc-nav-label">{{ 'My account' | t }}</p>
+            <nav>
+              @for (s of sections(); track s.key) {
+                <a routerLink="/account" [fragment]="s.key" class="acc-nav-link" [class.active]="section() === s.key" [attr.aria-current]="section() === s.key ? 'page' : null">
+                  <i class="bi" [class]="s.icon"></i><span>{{ s.name | t }}</span>
+                </a>
+              }
+            </nav>
+            <div class="acc-nav-foot">
+              <a routerLink="/upload" class="acc-nav-link"><i class="bi bi-camera"></i><span>{{ 'Share a selfie' | t }}</span></a>
+              <button type="button" class="acc-nav-link" (click)="signOut()"><i class="bi bi-box-arrow-right"></i><span>{{ 'Sign out' | t }}</span></button>
+            </div>
+          </aside>
+        }
+      <div class="account-sections">
+        <!-- Profile -->
+        @if (show('profile')) {
+        <section class="card-soft" id="profile">
+          <h2 class="acc-title">{{ 'Profile' | t }}</h2>
+          <form #pf="ngForm" (ngSubmit)="save(pf.valid)" novalidate [class.was-validated]="pf.submitted">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="pName">{{ 'Your name' | t }} <b class="req">*</b></label>
+                <input class="form-control" id="pName" name="fullName" [(ngModel)]="form.fullName" required minlength="2" maxlength="60" autocomplete="name">
+                <div class="invalid-feedback">{{ 'Please tell us your name.' | t }}</div>
+              </div>
+              <div class="col-md-6">
+                @if (p.signUpMethod === 'Email') {
+                  <label class="form-label" for="pEmail">{{ 'Email' | t }}</label>
+                  <input class="form-control" id="pEmail" name="email" type="email" [ngModel]="form.email" readonly>
+                  <div class="form-text">{{ 'You sign in with this email, so it can’t be changed here.' | t }}</div>
+                } @else {
+                  <label class="form-label" for="pEmail">{{ 'Email' | t }} <span class="text-muted small">{{ '(optional)' | t }}</span></label>
+                  <input class="form-control" id="pEmail" name="email" type="email" [(ngModel)]="form.email" email maxlength="254" autocomplete="email">
+                  <div class="invalid-feedback">{{ "That email doesn't look right." | t }}</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="pCountry">{{ 'Country' | t }} <b class="req">*</b></label>
+                <select class="form-select" id="pCountry" name="countryCode" [(ngModel)]="form.countryCode" required>
+                  @for (c of countries(); track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+                </select>
+              </div>
+              <div class="col-md-6">
+                @if (form.countryCode === 'IN') {
+                  <label class="form-label" for="pState">{{ 'State / UT' | t }}</label>
+                  <select class="form-select" id="pState" name="stateName" [(ngModel)]="form.stateName">
+                    <option value="">{{ 'Choose state / UT' | t }}</option>
+                    @for (s of states; track s) { <option [value]="s">{{ s }}</option> }
+                  </select>
+                } @else {
+                  <label class="form-label" for="pRegion">{{ 'State / region' | t }}</label>
+                  <input class="form-control" id="pRegion" name="stateName" [(ngModel)]="form.stateName" maxlength="60">
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="pCity">{{ 'City / village' | t }}</label>
+                <input class="form-control" id="pCity" name="city" [(ngModel)]="form.city" maxlength="60" autocomplete="address-level2">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="pLang">{{ 'Preferred language' | t }}</label>
+                <select class="form-select" id="pLang" name="preferredLanguage" [(ngModel)]="form.preferredLanguage">
+                  @for (l of i18n.languages; track l.code) { <option [value]="l.code">{{ l.name }}</option> }
+                </select>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="pAdult" name="isAdultConfirmed" [(ngModel)]="form.isAdultConfirmed" required>
+                  <label class="form-check-label" for="pAdult">{{ 'I confirm I am 18 or older.' | t }} <b class="req">*</b></label>
+                  <div class="invalid-feedback">{{ 'Accounts are for adults. A parent or guardian can share for children.' | t }}</div>
+                </div>
+                <div class="form-check mt-1">
+                  <input class="form-check-input" type="checkbox" id="pUpdates" name="whatsAppOptIn" [(ngModel)]="form.whatsAppOptIn">
+                  <label class="form-check-label" for="pUpdates">{{ 'Send me campaign updates on WhatsApp (you can stop any time).' | t }}</label>
+                </div>
+              </div>
+              <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                <button class="btn btn-accent" type="submit" [disabled]="saving()">
+                  @if (saving()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-check2"></i> }
+                  {{ 'Save profile' | t }}
+                </button>
+                @if (saved()) { <span class="form-note ok" role="status">{{ 'Saved.' | t }}</span> }
+                @for (e of errors(); track e) { <span class="form-note err" role="alert">{{ e }}</span> }
+              </div>
+            </div>
+          </form>
+        </section>
+        }
+
+        <!-- Mobile number: add or change it; confirmed with a code before it's saved -->
+        @if (show('sign-in')) {
+        <section class="card-soft" id="mobile">
+          <h2 class="acc-title">{{ 'Mobile number' | t }}</h2>
+          @if (mobileStep() === 'view') {
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+              @if (p.mobileMasked) {
+                <span class="fw-semibold"><i class="bi bi-phone"></i> {{ p.mobileMasked }}</span>
+                <span class="badge text-bg-success"><i class="bi bi-patch-check"></i> {{ 'Verified' | t }}</span>
+              } @else {
+                <span class="text-muted">{{ 'No mobile number added yet.' | t }}</span>
+              }
+              <button class="btn btn-outline-accent btn-sm" type="button" (click)="startMobile()">
+                <i class="bi" [class.bi-plus-lg]="!p.mobileMasked" [class.bi-pencil]="p.mobileMasked"></i>
+                {{ (p.mobileMasked ? 'Change number' : 'Add mobile number') | t }}
+              </button>
+              @if (mobileSaved()) { <span class="form-note ok" role="status">{{ 'Mobile number saved.' | t }}</span> }
+            </div>
+            <p class="small text-muted mt-2 mb-0">{{ 'You can also sign in with this number.' | t }}</p>
+          } @else if (mobileStep() === 'number') {
+            <form (ngSubmit)="sendMobileCode()" novalidate>
+              <p class="text-muted small">{{ "We'll send a 6-digit code to the new number to confirm it's yours." | t }}</p>
+              <div class="row g-3">
+                <div class="col-md-7">
+                  <label class="form-label" for="mPhone">{{ 'Mobile number' | t }}</label>
+                  <div class="input-group">
+                    <app-dial-code-select id="mDial" [(value)]="mobile.dial" />
+                    <input class="form-control" id="mPhone" name="mPhone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                           placeholder="98765 43210" maxlength="16" [(ngModel)]="mobile.number" required>
+                  </div>
+                </div>
+                <div class="col-12 d-flex gap-3 small">
+                  <label><input type="radio" name="mChannel" value="sms" [(ngModel)]="mobile.channel"> {{ 'Send by SMS' | t }}</label>
+                  <label><input type="radio" name="mChannel" value="whatsapp" [(ngModel)]="mobile.channel"> {{ 'Send on WhatsApp' | t }}</label>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                  <button class="btn btn-accent" type="submit" [disabled]="mobileBusy()">
+                    @if (mobileBusy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-send"></i> }
+                    {{ 'Send code' | t }}
+                  </button>
+                  <button class="btn btn-light" type="button" (click)="cancelMobile()">{{ 'Cancel' | t }}</button>
+                  @if (mobileError()) { <span class="form-note err" role="alert">{{ mobileError() }}</span> }
+                </div>
+              </div>
+            </form>
+          } @else {
+            <form (ngSubmit)="verifyMobileCode()" novalidate>
+              <p class="text-muted small">{{ 'We sent it to' | t }} <strong>{{ mobileSentTo() }}</strong>
+                {{ (mobile.channel === 'whatsapp' ? 'on WhatsApp' : 'by SMS') | t }}.</p>
+              <div class="row g-3">
+                <div class="col-sm-6 col-md-4">
+                  <label class="form-label" for="mCode">{{ 'Enter the 6-digit code' | t }}</label>
+                  <input #mCode class="form-control otp-single" id="mCode" name="mCode" inputmode="numeric" autocomplete="one-time-code"
+                         maxlength="6" pattern="\d{6}" [(ngModel)]="mobile.code" required>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                  <button class="btn btn-accent" type="submit" [disabled]="mobileBusy()">
+                    @if (mobileBusy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-check2-circle"></i> }
+                    {{ 'Verify & save' | t }}
+                  </button>
+                  <button class="btn btn-light" type="button" (click)="mobileStep.set('number')">{{ 'Change number' | t }}</button>
+                  @if (mobileResendIn() > 0) { <span class="small text-muted">{{ 'Resend code in' | t }} <b>{{ mobileResendIn() }}</b>s</span> }
+                  @else { <button type="button" class="btn btn-link btn-sm p-0" (click)="sendMobileCode()">{{ 'Resend code' | t }}</button> }
+                  @if (mobileError()) { <span class="form-note err" role="alert">{{ mobileError() }}</span> }
+                </div>
+              </div>
+            </form>
+          }
+        </section>
+
+        <!-- Password (email accounts only; optional — the emailed code keeps working) -->
+        @if (p.signUpMethod === 'Email') {
+          <section class="card-soft" id="password" [class.pw-highlight]="welcome() && !p.hasPassword">
+            <h2 class="acc-title">{{ (p.hasPassword ? 'Change password' : 'Add a password') | t }}
+              @if (!p.hasPassword) { <span class="text-muted small fw-normal">{{ '(optional)' | t }}</span> }
+            </h2>
+            <p class="text-muted small">
+              @if (p.hasPassword) { {{ 'You can sign in with your email and password, or with a code sent to your email.' | t }} }
+              @else { {{ 'Sign in faster next time with your email and a password. You can always use a code sent to your email instead.' | t }} }
+            </p>
+            <form #pwf="ngForm" (ngSubmit)="savePassword(p.hasPassword, p.email ?? '')" novalidate>
+              <div class="row g-3">
+                @if (p.hasPassword) {
+                  <div class="col-md-6">
+                    <label class="form-label" for="pwCurrent">{{ 'Current password' | t }}</label>
+                    <input class="form-control" id="pwCurrent" name="currentPassword" [type]="showPw() ? 'text' : 'password'"
+                           [(ngModel)]="pw.current" autocomplete="current-password" maxlength="128" required>
+                  </div>
+                  <div class="w-100 d-none d-md-block"></div>
+                }
+                <!-- Hidden username field helps password managers save the right login -->
+                <input type="email" name="username" [value]="p.email" autocomplete="username" class="d-none" aria-hidden="true" tabindex="-1">
+                <div class="col-md-6">
+                  <label class="form-label" for="pwNew">{{ 'New password' | t }}</label>
+                  <div class="input-group">
+                    <input class="form-control" id="pwNew" name="newPassword" [type]="showPw() ? 'text' : 'password'"
+                           [(ngModel)]="pw.next" autocomplete="new-password" minlength="8" maxlength="128" required
+                           aria-describedby="pwHint">
+                    <button class="btn btn-outline-secondary" type="button" (click)="showPw.set(!showPw())"
+                            [attr.aria-pressed]="showPw()" [attr.aria-label]="(showPw() ? 'Hide password' : 'Show password') | t">
+                      <i class="bi" [class.bi-eye]="!showPw()" [class.bi-eye-slash]="showPw()"></i>
+                    </button>
+                  </div>
+                  <div class="form-text" id="pwHint">{{ 'At least 8 characters. A short sentence is easy to remember and hard to guess.' | t }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="pwConfirm">{{ 'Confirm new password' | t }}</label>
+                  <input class="form-control" id="pwConfirm" name="confirmPassword" [type]="showPw() ? 'text' : 'password'"
+                         [(ngModel)]="pw.confirm" autocomplete="new-password" maxlength="128" required>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                  <button class="btn btn-accent" type="submit" [disabled]="pwSaving()">
+                    @if (pwSaving()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-key"></i> }
+                    {{ (p.hasPassword ? 'Change password' : 'Save password') | t }}
+                  </button>
+                  @if (pwSaved()) { <span class="form-note ok" role="status">{{ 'Password saved.' | t }}</span> }
+                  @for (e of pwErrors(); track e) { <span class="form-note err" role="alert">{{ e }}</span> }
+                </div>
+              </div>
+            </form>
+          </section>
+        }
+        }
+
+        <!-- After the welcome step -->
+        @if (show('streak')) { <app-gratitude-streak /> }
+        @if (show('albums')) { <app-my-albums /> }
+        @if (show('my-page')) { <app-public-profile-settings /> }
+        @if (show('reminders')) { <app-family-dates /> }
+
+        <!-- Privacy & data -->
+        @if (show('privacy')) {
+        <section class="card-soft" id="privacy">
+          <h2 class="acc-title">{{ 'Privacy & data' | t }}</h2>
+          <p class="text-muted small">{{ "You're in control. See what we hold about you, download it, or delete your account." | t }} <a href="/privacy">{{ 'Privacy Policy' | t }}</a></p>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-accent" type="button" (click)="download()"><i class="bi bi-download"></i> {{ 'Download my data' | t }}</button>
+            <button class="btn btn-light" type="button" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> {{ 'Sign out' | t }}</button>
+          </div>
+          <div class="delete-box mt-4">
+            <p class="fw-semibold mb-1 text-danger"><i class="bi bi-trash"></i> {{ 'Delete my account' | t }}</p>
+            <p class="small text-muted">{{ "This removes your profile and signs you out everywhere. It can't be undone." | t }}</p>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <label class="visually-hidden" for="confirmDelete">{{ 'Type DELETE to confirm' | t }}</label>
+              <input class="form-control" id="confirmDelete" name="confirmDelete" [(ngModel)]="deleteConfirm" autocomplete="off" placeholder="DELETE" style="max-width: 160px">
+              <button class="btn btn-outline-danger" type="button" (click)="deleteAccount()" [disabled]="deleting() || deleteConfirm.trim().toUpperCase() !== 'DELETE'">{{ 'Delete everything' | t }}</button>
+            </div>
+          </div>
+        </section>
+        }
+      </div>
+      </div>
+    } @else {
+      <p class="text-muted py-5 text-center"><span class="spinner-border spinner-border-sm"></span> {{ 'Loading…' | t }}</p>
+    }
+  </div>
+</main>

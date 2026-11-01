@@ -1,0 +1,43 @@
+/* Family albums (/albums/{id}, /albums/join/{code}) */
+.fa-page { background: #fbf7f2; min-height: 70vh; }
+.fa-hero { position: relative; overflow: hidden; color: #fff; text-align: center; padding: clamp(52px, 7vw, 92px) 0 clamp(64px, 8vw, 96px);
+  background: radial-gradient(ellipse at 15% 20%, rgba(255,193,140,.35), transparent 45%), radial-gradient(ellipse at 85% 80%, rgba(244,185,66,.25), transparent 45%),
+    linear-gradient(140deg, #b6462b, #8a2f4d 50%, #3d2a5c); }
+.fa-hero::after { content: ""; position: absolute; inset: auto 0 -1px; height: 48px; background: #fbf7f2; clip-path: ellipse(75% 100% at 50% 100%); }
+.fa-eyebrow { display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .95rem; border-radius: 999px; font-size: .74rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); }
+.fa-hero h1 { font-size: clamp(1.9rem, 5vw, 3rem); font-weight: 800; margin: .9rem 0 .5rem; }
+.fa-lead { max-width: 620px; margin: 0 auto 1.1rem; font-size: 1.08rem; opacity: .92; }
+.fa-who { display: inline-flex; align-items: center; gap: .7rem; padding: .4rem .9rem .4rem .45rem; border-radius: 999px; background: rgba(255,255,255,.12); font-size: .9rem; }
+.fa-chips { display: flex; }
+.fa-chips span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; background: #f4b942; color: #4a3200;
+  font-weight: 700; font-size: .8rem; }
+.fa-chips span + span { margin-left: -9px; }
+.fa-chips span:nth-child(2n) { background: #ffd1c2; color: #7a2a16; }
+.fa-chips span:nth-child(3n) { background: #c9e7e3; color: #0a3d3e; }
+.fa-actions { display: flex; justify-content: center; margin-top: 1.4rem; position: relative; z-index: 1; }
+.fa-actions .btn-lg { border-radius: 999px; padding: .75rem 1.6rem; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
+.fa-loading { display: grid; justify-items: center; gap: .8rem; }
+.fa-loading span { display: block; height: 22px; width: min(420px, 80%); border-radius: 8px; background: rgba(255,255,255,.18); animation: fa-pulse 1.4s ease-in-out infinite; }
+.fa-loading span + span { width: min(280px, 60%); }
+@keyframes fa-pulse { 50% { opacity: .5; } }
+
+.fa-invite { max-width: 760px; margin: -1rem auto 2rem; position: relative; }
+.fa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 1.6rem 1.2rem; padding-top: 1rem; }
+.fa-tile { display: block; padding: .6rem .6rem 0; background: #fff; border-radius: 6px; box-shadow: 0 8px 24px rgba(60,30,20,.12); color: inherit; text-decoration: none;
+  transform: rotate(var(--tilt, 0deg)); transition: transform .25s, box-shadow .25s; }
+.fa-tile:hover { transform: rotate(0) translateY(-4px) scale(1.02); box-shadow: 0 16px 34px rgba(60,30,20,.18); color: inherit; }
+.fa-photo { display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 3px; background: #efe7dd; }
+.fa-photo img { width: 100%; height: 100%; object-fit: cover; }
+.fa-ph { display: grid; place-items: center; height: 100%; font-size: 2rem; color: #b6a593; }
+.fa-cap { display: flex; align-items: baseline; justify-content: center; gap: .35rem; padding: .7rem .4rem .85rem; font-family: "Caveat", "Segoe Script", cursive; }
+.fa-cap strong { font-size: 1.25rem; color: #4a2c22; }
+.fa-cap small { color: #8a7566; font-size: .95rem; }
+.fa-add { border: 2px dashed #e8b7a5; box-shadow: none; background: transparent; }
+.fa-add .fa-photo { background: rgba(240,101,67,.06); }
+.fa-add .fa-ph { color: var(--accent); }
+.fa-empty { text-align: center; color: #7a6a5c; padding: 2.5rem 0; }
+.fa-empty .bi { display: block; font-size: 2rem; margin-bottom: .5rem; }
+.fa-cta { margin: 2.5rem auto 0; max-width: 620px; padding: 1.5rem; border-radius: 1.2rem; background: #fff; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+.fa-cta p { font-weight: 600; margin-bottom: .75rem; }
+@media (prefers-reduced-motion: reduce) { .fa-tile { transform: none; transition: none; } .fa-loading span { animation: none; } }

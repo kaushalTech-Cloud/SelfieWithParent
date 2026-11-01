@@ -1,0 +1,45 @@
+/* App-specific additions on top of the design stylesheets in src/styles/ */
+
+/* Featured selfies: swipeable row (replaces the static site's carousel library) */
+.featured-row {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: 1.5rem;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1rem; -webkit-overflow-scrolling: touch;
+}
+.featured-row .selfie-card { scroll-snap-align: start; }
+@media (min-width: 1200px) { .featured-row { grid-auto-columns: calc((100% - 4.5rem) / 4); } }
+
+/* Account: delete area */
+.delete-box { border-top: 1px dashed #eadfd1; padding-top: 1rem; }
+.account-page .account-sections { max-width: 860px; }
+
+/* Sign-in: Mobile | Email switch */
+.signin-method { display: flex; gap: .4rem; background: var(--soft); border-radius: 50px; padding: 4px; margin: .4rem 0 1rem; }
+.signin-method button {
+  flex: 1; border: 0; background: transparent; border-radius: 50px; padding: .5rem .8rem;
+  font-weight: 600; font-size: .9rem; color: var(--muted);
+}
+.signin-method button.active { background: var(--white); color: var(--accent); box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+.signin-method button:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+
+/* Sign-in: country code picker with flags (shared/dial-code-select.ts) */
+.dial-picker { position: relative; flex: 0 0 auto; display: flex; }
+.dial-picker .dial-trigger {
+  display: flex; align-items: center; gap: .45rem; width: auto; min-width: 104px; max-width: none;
+  text-align: start; background-color: var(--white); border-inline-end: 0;
+}
+.dial-flag { width: 20px; height: 15px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); flex: 0 0 auto; object-fit: cover; }
+.dial-list {
+  position: absolute; z-index: 1050; top: calc(100% + 4px); inset-inline-start: 0; min-width: 260px; max-height: 280px;
+  overflow-y: auto; margin: 0; padding: .3rem; list-style: none; background: var(--white);
+  border: 1px solid #eadfd1; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.12);
+}
+.dial-list:focus { outline: none; }
+.dial-list:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+.dial-option { display: flex; align-items: center; gap: .6rem; padding: .5rem .6rem; border-radius: 8px; cursor: pointer; font-size: .92rem; }
+.dial-option.active { background: var(--soft); }
+.dial-option[aria-selected="true"] { font-weight: 600; color: var(--accent); }
+.dial-name { flex: 1; }
+.dial-code { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Account: password card stands out right after the first email sign-in */
+.card-soft.pw-highlight { box-shadow: 0 0 0 2px var(--gold), 0 10px 30px rgba(0,0,0,.06); }

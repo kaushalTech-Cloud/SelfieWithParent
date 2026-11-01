@@ -1,0 +1,105 @@
+<main id="main" class="auth-page" tabindex="-1">
+  <div class="container">
+    <div class="auth-grid">
+      <section class="auth-art" aria-hidden="true">
+        <span class="eyebrow">{{ 'Welcome' | t }}</span>
+        <h1 class="auth-art-title">{{ 'One sign-in.' | t }}<br><em>{{ 'Every memory, saved.' | t }}</em></h1>
+        <ul class="auth-perks">
+          <li><i class="bi bi-lightning-charge"></i> {{ 'Upload in seconds — your details fill in for you' | t }}</li>
+          <li><i class="bi bi-clock-history"></i> {{ 'See when your selfie is approved' | t }}</li>
+          <li><i class="bi bi-bell"></i> {{ "Reminders for your parents' special days" | t }}</li>
+          <li><i class="bi bi-shield-lock"></i> {{ 'No passwords to remember' | t }}</li>
+        </ul>
+      </section>
+
+      <section class="auth-card" aria-labelledby="authTitle">
+        @if (step() === 'phone') {
+          <form (ngSubmit)="sendCode()" novalidate>
+            <h2 id="authTitle" class="auth-title">{{ 'Sign in or create an account' | t }}</h2>
+
+            <div class="signin-method" role="tablist" [attr.aria-label]="'Sign in with' | t">
+              <button type="button" role="tab" [class.active]="method() === 'mobile'" [attr.aria-selected]="method() === 'mobile'" (click)="chooseMethod('mobile')">
+                <i class="bi bi-phone"></i> {{ 'Mobile' | t }}
+              </button>
+              <button type="button" role="tab" [class.active]="method() === 'email'" [attr.aria-selected]="method() === 'email'" (click)="chooseMethod('email')">
+                <i class="bi bi-envelope"></i> {{ 'Email' | t }}
+              </button>
+            </div>
+
+            @if (method() === 'mobile') {
+              <p class="text-muted small">{{ "Enter your mobile number. We'll send you a 6-digit code — no password needed." | t }}</p>
+              <label class="form-label fw-semibold small" for="phone">{{ 'Mobile number' | t }}</label>
+              <div class="input-group mb-1">
+                <app-dial-code-select id="dial" [(value)]="dial" />
+                <input class="form-control" id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                       placeholder="98765 43210" maxlength="16" [(ngModel)]="phone" required>
+              </div>
+              <div class="d-flex gap-3 small my-3">
+                <label><input type="radio" name="channel" value="sms" [(ngModel)]="channel"> {{ 'Send by SMS' | t }}</label>
+                <label><input type="radio" name="channel" value="whatsapp" [(ngModel)]="channel"> {{ 'Send on WhatsApp' | t }}</label>
+              </div>
+            } @else {
+              @if (usePassword()) {
+                <p class="text-muted small">{{ 'Sign in with your email and the password you added.' | t }}</p>
+              } @else {
+                <p class="text-muted small">{{ "Enter your email. We'll send you a 6-digit code — no password needed." | t }}</p>
+              }
+              <label class="form-label fw-semibold small" for="email">{{ 'Email address' | t }}</label>
+              <input class="form-control mb-3" id="email" name="email" type="email" inputmode="email"
+                     [attr.autocomplete]="usePassword() ? 'username' : 'email'"
+                     placeholder="name@example.com" maxlength="254" [(ngModel)]="email" required>
+              @if (usePassword()) {
+                <label class="form-label fw-semibold small" for="password">{{ 'Password' | t }}</label>
+                <div class="input-group mb-2">
+                  <input class="form-control" id="password" name="password" [type]="showPassword() ? 'text' : 'password'"
+                         autocomplete="current-password" maxlength="128" [(ngModel)]="password" required>
+                  <button class="btn btn-outline-secondary" type="button" (click)="showPassword.set(!showPassword())"
+                          [attr.aria-pressed]="showPassword()" [attr.aria-label]="(showPassword() ? 'Hide password' : 'Show password') | t">
+                    <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                  </button>
+                </div>
+              }
+              <button type="button" class="btn btn-link btn-sm p-0 mb-3" (click)="togglePassword()">
+                {{ (usePassword() ? 'Forgot it? Get a code by email instead' : 'Use a password instead') | t }}
+              </button>
+            }
+            @if (error()) { <div class="invalid-msg mb-2" role="alert">{{ error() }}</div> }
+            <button class="btn btn-accent w-100 py-2" type="submit" [disabled]="busy()">
+              @if (busy()) { <span class="spinner-border spinner-border-sm"></span> }
+              @else { <i class="bi" [class.bi-send]="!passwordMode()" [class.bi-box-arrow-in-right]="passwordMode()"></i> }
+              {{ (passwordMode() ? 'Sign in' : 'Send code') | t }}
+            </button>
+            <p class="small text-muted mt-3 mb-0"><i class="bi bi-person-raised-hand"></i> {{ 'Under 18? Ask a parent or guardian to sign in and share for you.' | t }}</p>
+          </form>
+        } @else {
+          <form (ngSubmit)="verify()" novalidate>
+            <button type="button" class="btn btn-link p-0 small mb-2" (click)="changeNumber()"><i class="bi bi-arrow-left"></i> {{ (method() === 'email' ? 'Change email' : 'Change number') | t }}</button>
+            <h2 id="authTitle" class="auth-title">{{ 'Enter the 6-digit code' | t }}</h2>
+            <p class="text-muted small">{{ 'We sent it to' | t }} <strong>{{ sentTo() }}</strong>
+              {{ (method() === 'email' ? 'by email' : channel === 'whatsapp' ? 'on WhatsApp' : 'by SMS') | t }}.
+              @if (method() === 'email') { {{ "Can't find it? Check your spam folder." | t }} }
+            </p>
+            <div class="otp-boxes" role="group" [attr.aria-label]="'6-digit code' | t">
+              @for (d of digits(); track $index) {
+                <input #box class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                       [attr.autocomplete]="$index === 0 ? 'one-time-code' : 'off'"
+                       [attr.aria-label]="'Digit {n}' | t: { n: $index + 1 }"
+                       (input)="onDigit($index, $event)" (keydown)="onKey($index, $event)" (paste)="onPaste($event)">
+              }
+            </div>
+            @if (error()) { <div class="invalid-msg mb-2" role="alert">{{ error() }}</div> }
+            <button class="btn btn-accent w-100 py-2 mt-2" type="submit" [disabled]="busy()">
+              @if (busy()) { <span class="spinner-border spinner-border-sm"></span> {{ 'Verifying…' | t }} }
+              @else { <i class="bi bi-check2-circle"></i> {{ 'Verify & continue' | t }} }
+            </button>
+            <p class="small text-center mt-3 mb-0">
+              @if (resendIn() > 0) { {{ 'Resend code in' | t }} <b>{{ resendIn() }}</b>s }
+              @else { <button type="button" class="btn btn-link btn-sm p-0" (click)="resend()">{{ 'Resend code' | t }}</button> }
+            </p>
+          </form>
+        }
+        <p class="small text-muted mt-4 mb-0">{{ 'By continuing you agree to our' | t }} <a href="#">{{ 'Terms' | t }}</a> {{ 'and' | t }} <a href="/privacy">{{ 'Privacy Policy' | t }}</a>.</p>
+      </section>
+    </div>
+  </div>
+</main>

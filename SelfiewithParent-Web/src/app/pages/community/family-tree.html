@@ -1,0 +1,91 @@
+<header class="page-hero">
+  <app-donate-pill />
+  <div class="container">
+    <span class="eyebrow">{{ 'Every generation, one picture' | t }}</span>
+    <h1>{{ 'Build your' | t }} <em>{{ 'family tree' | t }}</em></h1>
+    <p class="lead">{{ 'Add as many people as your family has — from great-grandparents to grandchildren. Download it to print, frame or share with family.' | t }}</p>
+  </div>
+</header>
+
+<main id="main" class="pb-5" tabindex="-1">
+  <div class="container">
+    <div class="tree-wrap lift">
+      <form class="card-soft tree-form" (submit)="$event.preventDefault()">
+        <div class="tree-form-head">
+          <label class="form-label fw-semibold d-flex align-items-center gap-2" for="familyTitle"><span class="tf-icon"><i class="bi bi-diagram-3"></i></span> {{ 'Family name' | t }}</label>
+          <input class="form-control" id="familyTitle" name="familyTitle" type="text" maxlength="40" [placeholder]="'e.g. The Sharma family' | t"
+                 [(ngModel)]="familyTitle" (ngModelChange)="changed()">
+        </div>
+        <div class="tree-form-body">
+
+        @for (g of generations; track g.id) {
+          @if (shown().has(g.id) || inGen(g.id).length) {
+            <fieldset class="gen-box">
+              <legend class="d-flex align-items-center">
+                <span class="me-auto">{{ g.name | t }}</span>
+                <button type="button" class="btn btn-link btn-sm p-0 text-danger" (click)="hideGen(g)" [attr.aria-label]="('Remove this generation' | t) + ': ' + (g.name | t)" [title]="'Remove this generation' | t"><i class="bi bi-x-circle"></i></button>
+              </legend>
+              @for (p of inGen(g.id); track p.key) {
+                <div class="member">
+                  <label class="pic mb-0" [attr.aria-label]="('Add photo' | t) + ': ' + label(p)">
+                    @if (p.url; as src) { <img [src]="src" alt=""> } @else { <i class="bi bi-camera"></i> }
+                    <input type="file" class="visually-hidden" accept="image/*" (change)="pick(p, $event)">
+                  </label>
+                  <div class="member-fields">
+                    <div class="d-flex gap-1 mb-1">
+                      <select class="form-select form-select-sm" [name]="'rel-' + p.key" [(ngModel)]="p.relation" (ngModelChange)="changed()" [attr.aria-label]="'Relation' | t">
+                        @for (r of g.relations; track r) { <option [value]="r">{{ r | t }}</option> }
+                      </select>
+                      @if (g.sides) {
+                        <select class="form-select form-select-sm" [name]="'side-' + p.key" [(ngModel)]="p.side" (ngModelChange)="changed()" [attr.aria-label]="'Side of the family' | t">
+                          @for (s of sides; track s) { <option [value]="s">{{ (s || 'Either side') | t }}</option> }
+                        </select>
+                      }
+                    </div>
+                    <input type="text" class="form-control form-control-sm" maxlength="30" [name]="'name-' + p.key" [placeholder]="'Name' | t"
+                           [attr.aria-label]="label(p) + ' — ' + ('Name' | t)" [(ngModel)]="p.name" (ngModelChange)="changed()">
+                  </div>
+                  <div class="member-actions">
+                    @if (p.url) { <button type="button" class="btn btn-link btn-sm p-0" (click)="clearPhoto(p)" [title]="'Remove photo' | t" [attr.aria-label]="('Remove photo' | t) + ': ' + label(p)"><i class="bi bi-image"></i></button> }
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" (click)="remove(p)" [title]="'Remove' | t" [attr.aria-label]="('Remove' | t) + ': ' + label(p)"><i class="bi bi-x-lg"></i></button>
+                  </div>
+                </div>
+              }
+              @if (inGen(g.id).length < maxPerRow) {
+                <button type="button" class="add-person" (click)="add(g)"><i class="bi bi-person-plus"></i> {{ 'Add person' | t }}</button>
+              }
+            </fieldset>
+          }
+        }
+
+        @if (hidden().length) {
+          <div class="mt-3">
+            <label class="form-label small fw-semibold" for="addGen">{{ 'Add a generation' | t }}</label>
+            <select class="form-select form-select-sm" id="addGen" (change)="showGen(+$any($event.target).value); $any($event.target).value = ''">
+              <option value="">{{ 'Choose one' | t }}</option>
+              @for (g of hidden(); track g.id) { <option [value]="g.id">{{ g.name | t }}</option> }
+            </select>
+          </div>
+        }
+        </div>
+        <p class="tree-form-foot"><i class="bi bi-shield-lock"></i> {{ 'Photos stay on your device. Names are remembered in this browser.' | t }}</p>
+      </form>
+      <div class="tree-canvas-wrap">
+        <canvas #tree width="1600" height="1250" [attr.aria-label]="'Family tree preview' | t" role="img"></canvas>
+        <p class="small text-muted text-center mb-0 mt-2">{{ people().length }} {{ (people().length === 1 ? 'person' : 'people') | t }}</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+          <button class="btn btn-accent" type="button" (click)="download()"><i class="bi bi-download"></i> {{ 'Download tree' | t }}</button>
+          <button class="btn btn-outline-accent" type="button" (click)="reset()"><i class="bi bi-arrow-counterclockwise"></i> {{ 'Start again' | t }}</button>
+        </div>
+        <div class="post-tree mt-3">
+          <button class="btn btn-accent" type="button" (click)="post()" [disabled]="posting()">
+            @if (posting()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-images"></i> }
+            {{ (auth.isSignedIn() ? 'Post to the gallery' : 'Sign in to post to the gallery') | t }}
+          </button>
+          <p class="small text-muted mb-0 mt-1">{{ 'Your tree is shared as a picture in the Family gallery after our team reviews it.' | t }}</p>
+          @if (postError()) { <div class="small text-danger mt-1" role="alert">{{ postError() }}</div> }
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

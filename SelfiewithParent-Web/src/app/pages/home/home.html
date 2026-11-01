@@ -1,0 +1,244 @@
+<!-- Top slider (staff edit it in the admin site; the built-in slides show until then) -->
+@if (!hide('slider')) { <app-hero-slider [slides]="view().slides" [trustLine]="trustLine()" /> }
+
+<!-- Action tiles -->
+@if (!hide('tiles')) {
+<section class="actions" [class.no-hero]="hide('slider')">
+  <div class="container">
+    <div class="row g-3">
+      @for (tile of view().tiles; track $index; let i = $index) {
+        <div class="col-6 col-lg-3">
+          <a [siteLink]="tile.link" class="action-tile" [class]="'tile-' + 'abcd'[i % 4]">
+            <i class="bi" [class]="tile.icon"></i><span><strong>{{ tile.title }}</strong>@if (tile.text) { <small>{{ tile.text }}</small> }</span><i class="bi bi-arrow-right go" aria-hidden="true"></i>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+}
+
+<!-- What you can do with your selfie (frame, reel, contest, family tree) -->
+@if (view().showcase.show && !hide('showcase')) { <app-feature-showcase [content]="view().showcase" /> }
+
+<!-- Our story -->
+@if (!hide('story')) {
+<section id="about" class="section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <div class="about-visual"><img [src]="view().story.image" [alt]="'Illustration of a parent and child taking a selfie' | t" class="img-fluid"></div>
+      </div>
+      <div class="col-lg-7">
+        <span class="eyebrow text-accent">{{ view().story.eyebrow }}</span>
+        <h2 class="section-title">{{ view().story.title }}</h2>
+        <blockquote class="founder-quote">
+          <i class="bi bi-quote"></i>
+          <p>{{ view().story.quote }}</p>
+          <footer><strong>{{ view().story.name }}</strong>@if (view().story.role) { <span>{{ view().story.role }}</span> }</footer>
+        </blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+}
+
+<!-- Impact numbers -->
+@if (!hide('stats')) {
+<section id="stats" class="stats">
+  <div class="container">
+    <div class="row text-center g-4 justify-content-center">
+      @for (st of view().stats; track $index) {
+        <div class="col-6 col-md-3"><div class="stat"><span class="count">{{ formatNumber(st.value) }}</span><small>{{ st.label }}</small></div></div>
+      }
+    </div>
+    @if (view().statsNote) { <p class="text-center small mt-3 opacity-75">{{ view().statsNote }}</p> }
+  </div>
+</section>
+}
+
+<!-- Question of the day + reminders -->
+@if (!hide('question') || !hide('reminders')) {
+<section id="connect" class="section">
+  <div class="container">
+    <div class="row g-4">
+      @if (!hide('question')) {
+      <div class="col-lg-6">
+        <div class="question-card">
+          <span class="eyebrow">{{ 'Question of the day' | t }}</span>
+          <p class="q">“{{ question() }}”</p>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-accent" type="button" (click)="askOnWhatsApp()"><i class="bi bi-whatsapp"></i> {{ 'Ask them on WhatsApp' | t }}</button>
+            <button class="btn btn-ghost-light" type="button" (click)="nextQuestion()"><i class="bi bi-shuffle"></i> {{ 'Another question' | t }}</button>
+          </div>
+        </div>
+      </div>
+      }
+      @if (!hide('reminders')) {
+      <div class="col-lg-6">
+        <div class="reminder-card">
+          <span class="eyebrow text-accent">{{ 'Never miss their day' | t }}</span>
+          <h2 class="section-title h3 mb-2">{{ 'Birthday & anniversary reminders' | t }}</h2>
+          <p class="text-muted small mb-3">{{ "Save the dates and we'll remind you a few days before, with a frame ready to share." | t }}</p>
+          <form class="row g-2" (ngSubmit)="addReminder()">
+            <div class="col-12 col-xl-5"><input class="form-control" name="rName" [(ngModel)]="newReminder.name" required maxlength="60" [placeholder]="'Name (e.g. Maa)' | t" [attr.aria-label]="'Name' | t"></div>
+            <div class="col-7 col-xl-4"><input class="form-control" name="rDate" type="date" [(ngModel)]="newReminder.date" required [attr.aria-label]="'Date' | t"></div>
+            <div class="col-5 col-xl-3">
+              <select class="form-select" name="rType" [(ngModel)]="newReminder.type" [attr.aria-label]="'Occasion' | t">
+                <option value="Birthday">{{ 'Birthday' | t }}</option><option value="Anniversary">{{ 'Anniversary' | t }}</option>
+              </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+              <button class="btn btn-accent btn-sm" type="submit" [disabled]="reminderBusy()"><i class="bi bi-bell"></i>
+                {{ (auth.isSignedIn() ? 'Add reminder' : 'Sign in to save reminders') | t }}</button>
+              @if (auth.isSignedIn()) { <a class="small" routerLink="/account" fragment="reminders">{{ 'All my family dates' | t }}</a> }
+            </div>
+            @if (reminderError()) { <div class="col-12 small text-danger" role="alert">{{ reminderError() }}</div> }
+          </form>
+          <ul class="reminder-list">
+            @for (r of familyDates(); track r.publicId) {
+              <li>
+                <i class="bi text-accent" [class.bi-hearts]="r.occasion === 'Anniversary'" [class.bi-cake2]="r.occasion !== 'Anniversary'"></i>
+                <span><b>{{ r.name }}</b> · <span class="text-muted">{{ r.occasion | t }}, {{ dayText(r.month, r.day) }}</span></span>
+                <span class="days">{{ r.daysUntil === 0 ? ('Today!' | t) : ('in {n} days' | t: { n: r.daysUntil }) }}</span>
+                <button type="button" (click)="removeReminder(r)" [attr.aria-label]="('Remove reminder' | t) + ': ' + r.name"><i class="bi bi-x-lg"></i></button>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>
+}
+
+<!-- Featured selfies -->
+@if (!hide('theme') || !hide('contest') || !hide('featured')) {
+<section id="gallery" class="section bg-soft">
+  <div class="container">
+    @if (!hide('theme')) {
+    <div class="theme-banner">
+      <div class="theme-icon"><i class="bi" [class]="view().theme.icon"></i></div>
+      <div class="theme-text"><small>{{ 'Theme of the month' | t }}</small><h3>{{ view().theme.title }}</h3><p>{{ view().theme.text }}</p></div>
+      <a class="btn btn-accent" routerLink="/upload"><i class="bi bi-upload"></i> {{ "Join this month's theme" | t }}</a>
+    </div>
+    }
+    @if (!hide('contest') && features.on('contest')) {
+    <app-contest-spotlight />
+    }
+    @if (!hide('featured')) {
+    <div class="text-center mb-5">
+      <span class="eyebrow text-accent">{{ 'From our community' | t }}</span>
+      <h2 class="section-title">{{ 'Featured Selfies' | t }}</h2>
+    </div>
+    <div class="featured-row" role="list">
+      @for (s of featuredNow(); track s.name) {
+        <a class="selfie-card" role="listitem" routerLink="/selfies" [attr.aria-label]="s.name">
+          <img [src]="s.img" [alt]="s.name" loading="lazy">
+          <div class="info"><h4>{{ s.name }}</h4><p>{{ s.city }}</p></div>
+        </a>
+      }
+    </div>
+    }
+  </div>
+</section>
+}
+
+<!-- Priorities -->
+@if (!hide('priorities')) {
+<section id="priorities" class="section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="eyebrow text-accent">{{ 'What we do' | t }}</span>
+      <h2 class="section-title">{{ 'Programme Priorities' | t }}</h2>
+    </div>
+    <div class="row g-4">
+      @for (p of view().priorities; track $index) {
+        <div class="col-md-6 col-lg-3"><div class="priority-card"><i class="bi" [class]="p.icon"></i><h3>{{ p.title }}</h3><p>{{ p.text }}</p></div></div>
+      }
+    </div>
+  </div>
+</section>
+}
+
+<!-- Pledge teaser -->
+@if (!hide('pledge')) {
+<section class="section pt-0">
+  <div class="container">
+    <div class="pledge-band">
+      <h2>{{ view().pledge.title }}</h2>
+      <p>{{ view().pledge.text }}</p>
+      <div class="pledge-count">{{ formatNumber(view().pledge.count).replace('+', '') }}</div>
+      <p class="small">{{ 'people have taken the pledge' | t }}</p>
+      <a class="btn btn-white" routerLink="/impact" fragment="pledge"><i class="bi bi-hand-thumbs-up"></i> {{ 'Take the pledge' | t }}</a>
+    </div>
+  </div>
+</section>
+}
+
+<!-- App -->
+@if (!hide('app')) {
+<section id="app" class="app-band">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7 text-white">
+        <h2 class="section-title text-white">{{ view().app.title }}</h2>
+        <p class="lead">{{ view().app.text }}</p>
+        <div class="d-flex flex-wrap gap-3">
+          @if (view().app.playUrl) {
+            <a [siteLink]="view().app.playUrl" class="store-btn"><i class="bi bi-google-play"></i><span><small>{{ 'Get it on' | t }}</small>Google Play</span></a>
+          } @else {
+            <span class="store-btn soon"><i class="bi bi-google-play"></i><span><small>{{ 'Coming soon' | t }}</small>Google Play</span></span>
+          }
+          @if (view().app.appStoreUrl) {
+            <a [siteLink]="view().app.appStoreUrl" class="store-btn"><i class="bi bi-apple"></i><span><small>{{ 'Download on the' | t }}</small>App Store</span></a>
+          } @else {
+            <span class="store-btn soon"><i class="bi bi-apple"></i><span><small>{{ 'Coming soon' | t }}</small>App Store</span></span>
+          }
+        </div>
+      </div>
+      <div class="col-lg-5 text-center"><img [src]="img('phone.svg')" [alt]="'App preview' | t" class="img-fluid app-phone"></div>
+    </div>
+  </div>
+</section>
+}
+
+<!-- Contact -->
+@if (!hide('contact')) {
+<section id="contact" class="section">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-5">
+        <span class="eyebrow text-accent">{{ 'Get in touch' | t }}</span>
+        <h2 class="section-title">{{ 'Contact Details' | t }}</h2>
+        <ul class="contact-list">
+          @let c = contact.details();
+          @if (c.email) { <li><i class="bi bi-envelope"></i> <a [href]="'mailto:' + c.email">{{ c.email }}</a></li> }
+          @if (c.phone) { <li><i class="bi bi-telephone"></i> <a [href]="tel(c.phone)">{{ c.phone }}</a></li> }
+          @if (c.address) { <li><i class="bi bi-geo-alt"></i> {{ c.address }}</li> }
+        </ul>
+      </div>
+      <div class="col-lg-7">
+        <form class="contact-form" #cf="ngForm" (ngSubmit)="cf.valid && sendContact(cf)">
+          <div class="row g-3">
+            <div class="col-md-6"><input class="form-control" name="cname" ngModel required maxlength="60" [placeholder]="'Your name' | t"></div>
+            <div class="col-md-6"><input class="form-control" type="email" name="cemail" ngModel required email maxlength="120" [placeholder]="'Email' | t"></div>
+            <div class="col-12"><input class="form-control" name="csubject" ngModel maxlength="100" [placeholder]="'Subject' | t"></div>
+            <div class="col-12"><textarea class="form-control" name="cmessage" ngModel required rows="4" maxlength="1000" [placeholder]="'Message' | t"></textarea></div>
+            <div class="col-12"><button class="btn btn-accent" type="submit" [disabled]="contactSending()">
+              @if (contactSending()) { <span class="spinner-border spinner-border-sm"></span> } {{ 'Send message' | t }}</button></div>
+          </div>
+          @if (contactSent()) {
+            <div class="form-note mt-3 ok" role="status">{{ "Thanks for writing to us. We'll reply soon." | t }}</div>
+          } @else if (contactError()) {
+            <div class="form-note mt-3 err" role="alert">{{ contactError() }}</div>
+          } @else if (cf.submitted && cf.invalid) {
+            <div class="form-note mt-3 err" role="status">{{ 'Please fill in the required fields.' | t }}</div>
+          }
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+}

@@ -1,0 +1,173 @@
+<div class="story-page">
+@if (story(); as st) {
+  <!-- Header: back to the gallery, the kind of selfie, the title, where and when -->
+  <header class="story-head" [class.memorial]="st.item.kind === 'memory'">
+    <app-donate-pill />
+    @let s = st.item;
+    @if (s.photoId) { <div class="sh-photo" aria-hidden="true" [style.background-image]="'url(' + file(s.photoId) + ')'"></div> }
+    <i class="bi bi-heart-fill sh-spark s1" aria-hidden="true"></i><i class="bi bi-stars sh-spark s2" aria-hidden="true"></i><i class="bi bi-camera-fill sh-spark s3" aria-hidden="true"></i>
+    <div class="container">
+      <nav [attr.aria-label]="'You are here' | t" class="sh-crumbs">
+        <a routerLink="/selfies"><i class="bi bi-arrow-left"></i> {{ 'Selfies' | t }}</a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <a routerLink="/selfies" [queryParams]="{ tab: st.tab }">{{ tabLabel() | t }}</a>
+      </nav>
+      <div class="story-tags">
+        <span class="story-kind">{{ tabLabel() | t }}</span>
+        @for (w of st.wins ?? []; track w.publicId) {
+          <a class="win-badge" routerLink="/contest"><i class="bi bi-trophy-fill"></i> {{ winTitle(w) }} · {{ winDays(w) }}</a>
+        }
+      </div>
+      <h1 class="story-title">{{ title(s) }}</h1>
+      <div class="story-meta">
+        @if (s.place) { <span class="chip"><i class="bi bi-geo-alt"></i> {{ s.place }}</span> }
+        <span class="chip"><i class="bi bi-calendar-event"></i> {{ dateText(s.approvedAtUtc + 'Z', 'short') }}</span>
+        @if (s.kind === 'memory') {
+          <span class="chip"><i class="bi bi-flower1"></i> {{ 'In loving memory' | t }}@if (s.memoryYear) { · {{ s.memoryYear }} }</span>
+        }
+        @if (s.kind === 'ai') { <span class="chip"><i class="bi bi-stars"></i> {{ 'AI-made' | t }}</span> }
+      </div>
+      <!-- Share straight away (people arriving from a shared link see it first) -->
+      <div class="sh-actions">
+        <app-like-share look="glass" [id]="s.publicId" [likes]="s.likes ?? 0" [title]="title(s)" [path]="'/selfies/' + s.publicId"
+                        [image]="s.photoId ? file(s.photoId) : null" [video]="s.videoId ? file(s.videoId) : null" [caption]="s.message" />
+      </div>
+    </div>
+  </header>
+  <!-- Phones: a floating Share button while scrolling -->
+  <app-like-share class="share-fab" look="fab" [shareOnly]="true" [id]="st.item.publicId" [likes]="st.item.likes ?? 0" [title]="title(st.item)"
+                  [path]="'/selfies/' + st.item.publicId" [image]="st.item.photoId ? file(st.item.photoId) : null"
+                  [video]="st.item.videoId ? file(st.item.videoId) : null" [caption]="st.item.message" />
+}
+
+<main id="main" class="section pt-4" [class.story-main]="story()" tabindex="-1">
+  <div class="container">
+    @if (state() === 'loading') {
+      <p class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm"></span> {{ 'Loading…' | t }}</p>
+    } @else if (state() === 'missing' || state() === 'error') {
+      <div class="text-center py-5">
+        <h1 class="section-title">{{ (state() === 'missing' ? 'Selfie not found' : "We couldn't load this page") | t }}</h1>
+        <p class="text-muted">{{ (state() === 'missing' ? 'It may have been removed, or the link is wrong.' : 'Please check your connection and try again.') | t }}</p>
+        <a class="btn btn-accent" routerLink="/selfies"><i class="bi bi-arrow-left"></i> {{ 'Latest Selfies' | t }}</a>
+      </div>
+    } @else if (story(); as st) {
+      @let s = st.item;
+
+      <!-- Hero: the photo on a soft blurred copy of itself, the story card beside it -->
+      <section class="story-hero">
+        @if (s.photoId) { <div class="story-backdrop" aria-hidden="true" [style.background-image]="'url(' + file(s.photoId) + ')'"></div> }
+        <div class="story-grid">
+          <div class="story-visual">
+            <div class="story-media">
+              @if (s.photoId) { <img [src]="file(s.photoId)" [alt]="title(s)"> }
+              @else if (s.videoId) { <video [src]="file(s.videoId)" controls playsinline preload="metadata"></video> }
+            </div>
+            @if (s.photoId && s.videoId) {
+              <div class="story-media mt-3"><video [src]="file(s.videoId)" controls playsinline preload="metadata"></video></div>
+            }
+          </div>
+
+          <div class="story-card">
+            @if (s.message) { <blockquote class="story-quote"><i class="bi bi-quote" aria-hidden="true"></i>{{ s.message }}</blockquote> }
+
+            @if (s.voiceId) {
+              <!-- Voice note -->
+              <div class="voice-note" [class.is-playing]="playing()">
+                <audio #voice [src]="file(s.voiceId)" preload="metadata"
+                       (play)="playing.set(true)" (pause)="playing.set(false)" (ended)="playing.set(false); voiceAt.set(0)"
+                       (timeupdate)="onVoiceTime(voice)" (loadedmetadata)="onVoiceTime(voice)"></audio>
+                <button type="button" class="play" (click)="togglePlay(voice)" [attr.aria-label]="(playing() ? 'Pause voice note' : 'Play voice note') | t">
+                  <i class="bi" [class.bi-play-fill]="!playing()" [class.bi-pause-fill]="playing()"></i>
+                </button>
+                <div class="voice-body">
+                  <div class="voice-head">
+                    <span class="fw-semibold">{{ 'A message from {name}' | t: { name: s.parentName } }}</span>
+                    <span class="voice-time">{{ clock(voiceAt()) }}@if (voiceLength()) { / {{ clock(voiceLength()) }} }</span>
+                  </div>
+                  <div class="wave" aria-hidden="true">
+                    @for (h of bars(); track $index) { <span [style.height.%]="h" [class.on]="$index < barsOn()"></span> }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="story-actions">
+              <div class="story-share">
+                <app-like-share [id]="s.publicId" [likes]="s.likes ?? 0" [title]="title(s)" [path]="'/selfies/' + s.publicId"
+                                [image]="s.photoId ? file(s.photoId) : null" [video]="s.videoId ? file(s.videoId) : null" [caption]="s.message" />
+              </div>
+              <button class="btn btn-accent story-cert" type="button" (click)="certOpen.set(true)"><i class="bi bi-award"></i> {{ 'Get certificate' | t }}</button>
+              @if (s.photoId && (features.on('photo-frames') || features.on('reels'))) {
+                <div class="story-create">
+                  @if (features.on('photo-frames')) {
+                  <a class="create-tile" [routerLink]="['/selfies', s.publicId, 'frame']">
+                    <span class="ico"><i class="bi" [class.bi-image]="!st.wins?.length" [class.bi-trophy]="!!st.wins?.length"></i></span>
+                    <span><b>{{ (st.wins?.length ? 'Winner frame' : 'Photo frame') | t }}</b><small>{{ 'Add a festive border and download' | t }}</small></span>
+                  </a>
+                  }
+                  @if (features.on('reels')) {
+                  <a class="create-tile" [routerLink]="['/selfies', s.publicId, 'reel']">
+                    <span class="ico"><i class="bi bi-camera-reels"></i></span>
+                    <span><b>{{ 'Make a reel' | t }}</b><small>{{ 'A short video with music' | t }}</small></span>
+                  </a>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      @if (more().length) {
+        <section class="story-more">
+          <div class="d-flex align-items-end justify-content-between gap-2 mb-3">
+            <h2 class="grid-title mb-0">{{ 'More stories' | t }}</h2>
+            <a class="small fw-semibold text-accent text-decoration-none" routerLink="/selfies" [queryParams]="{ tab: st.tab }">{{ 'See all' | t }} <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="row g-3 g-md-4">
+            @for (m of more(); track m.publicId) {
+              <div class="col-6 col-md-3">
+                <a class="selfie-tile text-decoration-none" [routerLink]="['/selfies', m.publicId]">
+                  <div class="tile-photo"><img [src]="file(m.photoId)" [alt]="title(m)" loading="lazy"></div>
+                  <div class="tile-body"><h3>{{ title(m) }}</h3>@if (m.place) { <small>{{ m.place }}</small> }</div>
+                </a>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Certificate of gratitude (print or save as PDF) -->
+      @if (certOpen()) {
+        <div class="viewer-backdrop" (click)="certOpen.set(false)"></div>
+        <div class="viewer cert-viewer" role="dialog" aria-modal="true" aria-labelledby="certTitle">
+          <div class="d-flex align-items-start gap-2 mb-3">
+            <h5 class="mb-0 me-auto" id="certTitle">{{ 'Your certificate of gratitude' | t }}</h5>
+            <button type="button" class="btn-close" (click)="certOpen.set(false)" [attr.aria-label]="'Close' | t"></button>
+          </div>
+          <div class="certificate" [class.with-photo]="!!s.photoId" [style.--cert-photo]="s.photoId ? 'url(' + file(s.photoId) + ')' : null">
+            <div class="seal"><i class="bi bi-heart-fill"></i></div>
+            <span class="eyebrow text-accent">Selfie with Parent</span>
+            @if (st.wins?.length) {
+              <!-- Winner's certificate -->
+              <h2>{{ 'Certificate of Achievement' | t }}</h2>
+              <p>{{ 'This certificate is awarded to' | t }}</p>
+              <div class="names">{{ title(s) }}</div>
+              <p>{{ 'winner of {contest}, chosen by the hearts of our community — for a moment of love between generations.' | t: { contest: winTitle(st.wins![0]) + ' (' + winDays(st.wins![0]) + ')' } }}</p>
+            } @else {
+              <h2>{{ 'Certificate of Gratitude' | t }}</h2>
+              <p>{{ 'This certificate celebrates' | t }}</p>
+              <div class="names">{{ title(s) }}</div>
+              <p>{{ 'for honouring family with love, and for sharing a moment that reminds the world why parents and elders matter.' | t }}</p>
+            }
+            <div class="sign"><span>{{ dateText(today.toISOString(), 'long') }}</span><span>{{ 'Selfie with Parent team' | t }}</span></div>
+          </div>
+          <div class="text-end mt-3">
+            <button type="button" class="btn btn-accent" (click)="print()"><i class="bi bi-printer"></i> {{ 'Print or save as PDF' | t }}</button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</main>
+</div>

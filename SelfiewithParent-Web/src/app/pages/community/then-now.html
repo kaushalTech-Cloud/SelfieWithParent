@@ -1,0 +1,92 @@
+<header class="page-hero">
+  <app-donate-pill />
+  <div class="container">
+    <span class="eyebrow">{{ 'Recreate a memory' | t }}</span>
+    <h1>{{ 'Then' | t }} <em>&amp;</em> {{ 'Now' | t }}</h1>
+    <p class="lead">{{ 'Find an old photo with your parents, take the same picture today, and slide between the years.' | t }}</p>
+  </div>
+</header>
+
+<main id="main" class="pb-5" tabindex="-1">
+  <div class="container">
+    <!-- Make your own -->
+    <section class="card-soft lift mb-5">
+      <div class="row g-4 align-items-center">
+        <div class="col-lg-6">
+          <h2 class="section-title mt-2">{{ 'Make your own' | t }}</h2>
+          <p class="text-muted">{{ 'Add the old photo and the new one. Use the slider to compare, then download a side-by-side card to share.' | t }}</p>
+          @if (againNote()) { <div class="alert alert-success small py-2" role="status"><i class="bi bi-clock-history"></i> {{ againNote() }}</div> }
+          <div class="pair-drop">
+            <div>
+              <label class="pair-slot w-100 mb-0" [attr.aria-label]="'Choose the old photo' | t">
+                @if (thenFile()) { <img [src]="thenUrl()" alt=""> } @else { <span><i class="bi bi-clock-history"></i>{{ 'Old photo' | t }}<br><small>{{ 'Then' | t }}</small></span> }
+                <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="pick('then', $event)">
+              </label>
+              <input class="form-control form-control-sm mt-2" [placeholder]="'Year (e.g. 1998)' | t" maxlength="4" inputmode="numeric"
+                     [attr.aria-label]="'Year of the old photo' | t" [value]="thenYear" (input)="digits('then', $event)">
+            </div>
+            <div>
+              <label class="pair-slot w-100 mb-0" [attr.aria-label]="'Choose the new photo' | t">
+                @if (nowFile()) { <img [src]="nowUrl()" alt=""> } @else { <span><i class="bi bi-camera"></i>{{ 'New photo' | t }}<br><small>{{ 'Now' | t }}</small></span> }
+                <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="pick('now', $event)">
+              </label>
+              <input class="form-control form-control-sm mt-2" [placeholder]="'Year (e.g. 2026)' | t" maxlength="4" inputmode="numeric"
+                     [attr.aria-label]="'Year of the new photo' | t" [value]="nowYear" (input)="digits('now', $event)">
+            </div>
+          </div>
+          @if (makeError()) { <div class="invalid-msg text-danger small mt-2" role="alert">{{ makeError() }}</div> }
+        </div>
+        <div class="col-lg-6">
+          <div class="compare" [style.--pos]="pos() + '%'">
+            <img [alt]="'Now' | t" [src]="nowUrl()">
+            <img [alt]="'Then' | t" class="then-layer" [src]="thenUrl()">
+            <span class="tag then">{{ thenYear || ('Then' | t) }}</span><span class="tag now">{{ nowYear || ('Now' | t) }}</span>
+            <div class="divider"></div><div class="knob"><i class="bi bi-arrows"></i></div>
+            <input type="range" min="0" max="100" [value]="pos()" (input)="pos.set(+$any($event.target).value)" [attr.aria-label]="'Compare then and now' | t">
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-accent" type="button" (click)="download()" [disabled]="downloading()">
+              @if (downloading()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-download"></i> }
+              {{ 'Download side-by-side' | t }}
+            </button>
+            <button class="btn btn-outline-accent" type="button" (click)="submit()"><i class="bi bi-upload"></i> {{ 'Submit to the gallery' | t }}</button>
+          </div>
+          <p class="small text-muted mt-2 mb-0">{{ 'Our team reviews every pair before it appears in the gallery.' | t }}</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="text-center mb-4">
+      <span class="eyebrow text-accent">{{ 'From our community' | t }}</span>
+      <h2 class="section-title">{{ 'Then & Now gallery' | t }}</h2>
+    </div>
+    @if (state() === 'loading') {
+      <p class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> {{ 'Loading…' | t }}</p>
+    } @else if (state() === 'error') {
+      <p class="text-center text-muted py-4">{{ "We couldn't load the selfies. Please try again in a moment." | t }}</p>
+    } @else {
+      <div class="row g-4">
+        @for (p of pairs(); track p.publicId) {
+          @let at = positions()[p.publicId] ?? 50;
+          <div class="col-sm-6 col-lg-3">
+            <article class="compare-card">
+              <div class="compare" [style.--pos]="at + '%'">
+                <img [src]="file(p.photoId)" [alt]="title(p) + ' — ' + (p.nowYear ?? ('Now' | t))" loading="lazy">
+                <img [src]="file(p.thenId)" [alt]="title(p) + ' — ' + (p.thenYear ?? ('Then' | t))" class="then-layer" loading="lazy">
+                <span class="tag then">{{ p.thenYear ?? ('Then' | t) }}</span><span class="tag now">{{ p.nowYear ?? ('Now' | t) }}</span>
+                <div class="divider"></div><div class="knob"><i class="bi bi-arrows"></i></div>
+                <input type="range" min="0" max="100" [value]="at" (input)="slide(p.publicId, $event)" [attr.aria-label]="('Compare then and now' | t) + ' — ' + title(p)">
+              </div>
+              <div class="info"><div><h3>{{ title(p) }}</h3>@if (p.place) { <small>{{ p.place }}</small> }</div></div>
+            </article>
+          </div>
+        } @empty {
+          <p class="text-center text-muted py-4">{{ 'No pairs here yet — be the first to share one!' | t }}</p>
+        }
+      </div>
+      @if (pairs().length < total()) {
+        <div class="text-center mt-4"><button class="btn btn-outline-accent" type="button" (click)="more()">{{ 'Show more' | t }}</button></div>
+      }
+    }
+  </div>
+</main>

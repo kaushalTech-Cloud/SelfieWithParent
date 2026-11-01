@@ -1,0 +1,94 @@
+/* Content pages (About us, Our founder, What we do, Our journey…): modern look over about.css. Scoped to app-content-page. */
+
+/* Header */
+app-content-page .page-hero { position: relative; overflow: hidden; isolation: isolate; padding: clamp(64px, 9vw, 110px) 0 clamp(80px, 10vw, 130px);
+  background: radial-gradient(circle at 12% 25%, rgba(240,101,67,.35), transparent 40%), radial-gradient(circle at 88% 15%, rgba(244,185,66,.28), transparent 38%),
+              linear-gradient(120deg, var(--primary-dark), var(--primary) 60%, #2a9d8f); }
+app-content-page .page-hero::after { content: ""; position: absolute; inset: auto 0 -1px; height: 60px; z-index: -1;
+  background: var(--white); clip-path: ellipse(75% 100% at 50% 100%); }
+app-content-page .ph-spark { position: absolute; z-index: -1; color: rgba(255,255,255,.22); animation: ph-float 6s ease-in-out infinite; }
+app-content-page .ph-spark.s1 { font-size: 1.7rem; left: 10%; top: 28%; color: rgba(240,101,67,.65); }
+app-content-page .ph-spark.s2 { font-size: 1.9rem; right: 12%; top: 24%; color: rgba(244,185,66,.7); animation-delay: -2s; }
+app-content-page .ph-spark.s3 { font-size: 1.3rem; right: 24%; bottom: 30%; animation-delay: -4s; }
+@keyframes ph-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+app-content-page .page-hero .eyebrow { display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .95rem; border-radius: 999px;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+app-content-page .page-hero .eyebrow::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(244,185,66,.25); }
+app-content-page .page-hero h1 { font-size: clamp(2.4rem, 5.6vw, 3.9rem); line-height: 1.1; letter-spacing: -.01em; margin: 1rem 0 .8rem; }
+
+/* Tabs between the pages: a floating pill bar */
+app-content-page .about-tabs { position: relative; z-index: 3; width: fit-content; max-width: calc(100% - 24px); margin: 1.5rem auto 0; padding: .4rem;
+  display: flex; gap: .3rem; overflow-x: auto; scrollbar-width: none; border-radius: 999px; background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid #f0e6dd; box-shadow: 0 18px 40px -22px rgba(10,61,62,.45); }
+app-content-page .page-hero + .about-tabs { margin-top: -34px; }
+app-content-page .about-tabs::-webkit-scrollbar { display: none; }
+app-content-page .about-tabs a { flex-shrink: 0; white-space: nowrap; border-radius: 999px; box-shadow: none; background: transparent; }
+app-content-page .about-tabs a[aria-current="page"] { background: var(--accent); color: #fff; box-shadow: 0 8px 18px -8px var(--accent); }
+
+/* Section labels and headings */
+app-content-page .kicker { display: inline-flex; padding: .3rem .85rem; border-radius: 999px; background: #fde9df; }
+app-content-page .section-title { letter-spacing: -.01em; }
+app-content-page .about-section.soft { background: linear-gradient(180deg, #fbf6f1, #fff); }
+
+/* Cards */
+app-content-page .tile-card, app-content-page .go-card, app-content-page .step-card, app-content-page .programme, app-content-page .activity,
+app-content-page .tl-card, app-content-page .letter { border: 1px solid #f0e6dd; border-radius: 24px; box-shadow: 0 20px 44px -32px rgba(60,30,20,.45); }
+app-content-page .tile-card, app-content-page .programme, app-content-page .step-card { transition: transform .25s, box-shadow .25s; }
+app-content-page .tile-card:hover, app-content-page .programme:hover, app-content-page .step-card.reveal:hover { transform: translateY(-5px); box-shadow: 0 28px 50px -30px rgba(60,30,20,.5); }
+app-content-page .tile-card.dark { box-shadow: 0 26px 50px -28px rgba(10,61,62,.8);
+  background: radial-gradient(circle at 90% 10%, rgba(244,185,66,.25), transparent 40%), linear-gradient(140deg, var(--primary-dark), var(--primary)); }
+app-content-page .tile-card .tile-icon, app-content-page .go-card .tile-icon { border-radius: 16px; box-shadow: 0 10px 22px -12px var(--accent); }
+app-content-page .programme .p-icon { background: linear-gradient(135deg, var(--primary), #2a9d8f); box-shadow: 0 12px 24px -12px var(--primary); }
+app-content-page .programme:hover .p-icon { background: linear-gradient(135deg, var(--accent), var(--gold)); box-shadow: 0 12px 24px -12px var(--accent); }
+app-content-page .activity i { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; font-size: 1.3rem; background: #fde9df; }
+app-content-page .fact-list li { background: #fff; border: 1px solid #f0e6dd; border-radius: 16px; box-shadow: 0 10px 24px -20px rgba(60,30,20,.5); }
+app-content-page .fact-list i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: #fde9df; }
+
+/* Steps / change flow */
+app-content-page .change-step { background: #fff; border: 1px solid #f0e6dd; border-radius: 24px; box-shadow: 0 20px 44px -32px rgba(60,30,20,.45); }
+app-content-page .change-step i { width: 58px; height: 58px; margin: 0 auto; border-radius: 18px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--gold)); box-shadow: 0 12px 24px -12px var(--accent); }
+
+/* Numbers: a glowing band of glass cards */
+app-content-page .number-strip { padding: clamp(1rem, 3vw, 1.6rem); border-radius: 28px; color: #fff;
+  background: radial-gradient(circle at 10% 20%, rgba(244,185,66,.25), transparent 40%), radial-gradient(circle at 90% 80%, rgba(240,101,67,.28), transparent 40%),
+              linear-gradient(120deg, var(--primary-dark), var(--primary)); box-shadow: 0 26px 50px -30px rgba(10,61,62,.8); }
+app-content-page .number-strip > div { padding: 1.2rem .8rem; border-radius: 20px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); }
+app-content-page .number-strip .n { color: var(--gold); }
+app-content-page .number-strip small { color: rgba(255,255,255,.85); }
+
+/* Founder profile */
+app-content-page .portrait { border-radius: 32px; box-shadow: 0 30px 60px -30px rgba(10,61,62,.6); outline: 8px solid #fff; outline-offset: -8px; }
+app-content-page .profile-name { font-size: clamp(2.2rem, 4.6vw, 3.2rem); letter-spacing: -.01em; }
+app-content-page .profile-role { display: inline-flex; padding: .3rem .85rem; border-radius: 999px; background: #fde9df; }
+app-content-page .glance div { background: #fff; border: 1px solid #f0e6dd; border-left: 4px solid var(--accent); border-radius: 14px; }
+app-content-page .social-row a { border-radius: 14px; }
+app-content-page .letter { background: linear-gradient(135deg, #fff, #fffaf3); }
+app-content-page .pull-quote { position: relative; padding: clamp(1.6rem, 4vw, 2.6rem); border-radius: 28px; border: 0;
+  background: linear-gradient(135deg, #fff8ea, #fdeee4); box-shadow: 0 24px 50px -34px rgba(240,101,67,.6); }
+
+/* Journey timeline */
+app-content-page .timeline::before { width: 3px; border-radius: 3px; }
+app-content-page .tl-item .tl-dot { box-shadow: 0 0 0 6px rgba(240,101,67,.15), 0 10px 20px -10px var(--accent); }
+app-content-page .tl-card { transition: transform .25s, box-shadow .25s; }
+app-content-page .tl-card:hover { transform: translateY(-4px); box-shadow: 0 28px 50px -30px rgba(60,30,20,.5); }
+app-content-page .tl-year { display: inline-flex; padding: .2rem .7rem; border-radius: 999px; background: #fde9df; }
+
+/* Photos, FAQ, call to action */
+app-content-page .photo-strip figure { border-radius: 22px; box-shadow: 0 20px 40px -28px rgba(40,20,10,.6); transition: transform .3s; }
+app-content-page .photo-strip figure:hover { transform: translateY(-5px) rotate(-.6deg); }
+app-content-page .faq .accordion-item { border: 1px solid #f0e6dd !important; border-radius: 18px !important; box-shadow: 0 14px 30px -26px rgba(60,30,20,.5); }
+app-content-page .cta-panel { position: relative; overflow: hidden; border-radius: 32px; padding: clamp(2rem, 5vw, 3.4rem);
+  background: radial-gradient(circle at 15% 20%, rgba(255,255,255,.25), transparent 35%), linear-gradient(120deg, #f06543, #f4a259 60%, #f4b942);
+  box-shadow: 0 30px 60px -34px rgba(240,101,67,.8); }
+app-content-page .cta-panel::after { content: "\F415"; font-family: "bootstrap-icons"; position: absolute; right: -10px; bottom: -40px; font-size: 10rem; color: rgba(255,255,255,.12); }
+app-content-page .cta-panel > * { position: relative; z-index: 1; }
+
+@media (max-width: 767.98px) {
+  app-content-page .ph-spark { display: none; }
+  app-content-page .about-tabs { width: auto; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  app-content-page .ph-spark { animation: none; }
+  app-content-page .tile-card, app-content-page .programme, app-content-page .step-card, app-content-page .tl-card, app-content-page .photo-strip figure { transition: none; }
+}
