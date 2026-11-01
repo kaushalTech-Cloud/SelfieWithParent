@@ -1,0 +1,102 @@
+<section class="panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="mb-0">Visitors @if (data(); as d) { <span class="text-muted fw-normal">({{ d.total }})</span> }</h2>
+    <form class="d-flex flex-wrap gap-2" (ngSubmit)="find()" role="search">
+      <label class="visually-hidden" for="vSearch">Search visitors</label>
+      <input class="form-control form-control-sm" id="vSearch" name="search" type="search" [(ngModel)]="search"
+             placeholder="Name, email or last digits of mobile" maxlength="100" style="min-width: 260px">
+      <label class="visually-hidden" for="vStatus">Status</label>
+      <select class="form-select form-select-sm" id="vStatus" name="status" [(ngModel)]="status" (change)="find()" style="width: auto">
+        <option value="">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <button class="btn btn-sm btn-accent" type="submit"><i class="bi bi-search"></i> Search</button>
+    </form>
+  </div>
+
+  @if (notice()) { <div class="alert alert-success py-2 small" role="status">{{ notice() }}</div> }
+
+  @if (loading() && !data()) {
+    <p class="text-muted small py-3"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+  } @else if (loadError()) {
+    <div class="alert alert-danger small" role="alert">{{ loadError() }} <button class="btn btn-link btn-sm p-0" type="button" (click)="load()">Try again</button></div>
+  } @else if (data(); as d) {
+    <div class="table-responsive">
+      <table class="table align-middle staff-table mb-0" [class.opacity-50]="loading()">
+        <thead>
+          <tr>
+            <th scope="col">Name</th><th scope="col">Email / mobile</th><th scope="col">Country</th><th scope="col">Joined</th>
+            <th scope="col">Last sign-in</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of d.items; track v.publicId) {
+            <tr [class.row-inactive]="!v.isActive" [class.table-active]="changing() === v.publicId">
+              <td class="fw-semibold">{{ v.fullName || '—' }}</td>
+              <td class="small">
+                {{ v.email ?? '—' }}
+                @if (v.mobileMasked) { <div class="text-muted">{{ v.mobileMasked }}</div> }
+              </td>
+              <td class="small">{{ v.countryCode ?? '—' }}</td>
+              <td class="small text-muted">{{ v.createdAtUtc + 'Z' | date: 'd MMM y' }}</td>
+              <td class="small text-muted">{{ v.lastSignInAtUtc ? (v.lastSignInAtUtc + 'Z' | date: 'd MMM y, HH:mm') : 'Never' }}</td>
+              <td>
+                <span class="status-pill" [class.on]="v.isActive">{{ v.isActive ? 'Active' : 'Inactive' }}</span>
+                @if (v.lastReason) {
+                  <div class="small text-muted reason-note" [title]="v.lastReason">
+                    {{ v.lastStatusChangeAtUtc + 'Z' | date: 'd MMM' }}: {{ v.lastReason }}
+                  </div>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm" type="button" [class.btn-outline-warning]="v.isActive" [class.btn-outline-success]="!v.isActive"
+                        (click)="openChange(v)" [disabled]="busy()"
+                        [attr.aria-label]="(v.isActive ? 'Make inactive: ' : 'Make active: ') + name(v)">
+                  <i class="bi" [class.bi-pause-circle]="v.isActive" [class.bi-play-circle]="!v.isActive"></i>
+                  {{ v.isActive ? 'Make inactive' : 'Make active' }}
+                </button>
+              </td>
+            </tr>
+            @if (changing() === v.publicId) {
+              <tr class="table-active">
+                <td colspan="7">
+                  <form (ngSubmit)="applyChange(v)" novalidate [attr.aria-label]="(v.isActive ? 'Make inactive: ' : 'Make active: ') + name(v)">
+                    <label class="form-label small fw-semibold" [for]="'vReason-' + v.publicId">
+                      Reason for making {{ name(v) }} {{ v.isActive ? 'inactive' : 'active again' }}
+                    </label>
+                    <textarea class="form-control form-control-sm" [id]="'vReason-' + v.publicId" name="reason" rows="2" maxlength="500"
+                              [(ngModel)]="reason" required></textarea>
+                    <div class="form-text">
+                      {{ reason.trim().length }}/500 · At least 10 characters. The visitor is emailed this reason{{ v.isActive ? ', signed out everywhere and can\'t sign in until made active again' : '' }}.
+                    </div>
+                    @if (formError()) { <div class="alert alert-danger py-1 px-2 small mt-2 mb-0" role="alert">{{ formError() }}</div> }
+                    <div class="d-flex gap-2 mt-2">
+                      <button class="btn btn-sm" type="submit" [class.btn-warning]="v.isActive" [class.btn-success]="!v.isActive" [disabled]="busy()">
+                        @if (busy()) { <span class="spinner-border spinner-border-sm"></span> }
+                        {{ v.isActive ? 'Make inactive & email them' : 'Make active & email them' }}
+                      </button>
+                      <button class="btn btn-sm btn-light" type="button" (click)="changing.set(null)" [disabled]="busy()">Cancel</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr><td colspan="7" class="text-muted small">{{ search || status ? 'No visitors match.' : 'No visitors yet.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <nav class="d-flex justify-content-between align-items-center mt-3 small" aria-label="Pages">
+        <span class="text-muted">Page {{ page() }} of {{ pages() }}</span>
+        <span class="d-flex gap-2">
+          <button class="btn btn-sm btn-light" type="button" (click)="goTo(page() - 1)" [disabled]="page() === 1 || loading()"><i class="bi bi-chevron-left"></i> Previous</button>
+          <button class="btn btn-sm btn-light" type="button" (click)="goTo(page() + 1)" [disabled]="page() === pages() || loading()">Next <i class="bi bi-chevron-right"></i></button>
+        </span>
+      </nav>
+    }
+  }
+</section>

@@ -1,0 +1,157 @@
+<section class="panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="mb-0">Review queue</h2>
+    <button class="btn btn-light btn-sm" type="button" (click)="load()" [disabled]="loading()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+  </div>
+
+  @if (autoApprove() !== null) {
+    <div class="auto-approve d-flex flex-wrap align-items-center gap-2 mb-3 p-2 rounded border">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="autoApproveFrames" [checked]="autoApprove()"
+               [disabled]="!canSwitchAuto() || savingAuto()" (change)="setAutoApprove($any($event.target).checked)">
+        <label class="form-check-label fw-semibold" for="autoApproveFrames">Auto-approve photo frames</label>
+      </div>
+      <span class="small text-muted">
+        {{ autoApprove() ? 'On: frames visitors share from their own approved selfies go straight to the Photo Frames gallery. You can still take any down.'
+          : 'Off: shared photo frames wait here for review.' }}
+        @if (!canSwitchAuto()) { Only a super admin or admin can change this. }
+      </span>
+      @if (autoError()) { <span class="small text-danger" role="alert">{{ autoError() }}</span> }
+    </div>
+  }
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <ul class="nav nav-pills lang-tabs" role="tablist" aria-label="Status">
+      @for (s of ['Pending', 'Approved', 'Rejected']; track s) {
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" type="button" role="tab" [class.active]="status() === s" [attr.aria-selected]="status() === s" (click)="setStatus($any(s))">
+            {{ s === 'Pending' ? 'Waiting' : s }}
+            <span class="badge rounded-pill ms-1" [class.text-bg-warning]="s === 'Pending'" [class.text-bg-light]="s !== 'Pending'">
+              {{ s === 'Pending' ? (data()?.pending ?? 0) : s === 'Approved' ? (data()?.approved ?? 0) : (data()?.rejected ?? 0) }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Filter by type">
+      @for (f of [['all', 'All'], ['video', 'Has video'], ['family', 'Family'], ['ai', 'AI-made'], ['thennow', 'Then & Now'], ['frame', 'Photo frames']]; track f[0]) {
+        <button class="btn btn-outline-secondary" type="button" [class.active]="filter() === f[0]" (click)="filter.set($any(f[0]))">{{ f[1] }}</button>
+      }
+    </div>
+  </div>
+
+  @if (notice()) { <div class="alert alert-success py-2 small" role="status">{{ notice() }}</div> }
+  @if (error()) { <div class="alert alert-danger py-2 small" role="alert">{{ error() }}</div> }
+
+  @if (loading()) {
+    <p class="text-muted small py-3"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+  } @else if (loadError()) {
+    <div class="alert alert-danger small" role="alert">{{ loadError() }}</div>
+  } @else {
+    @for (s of shown(); track s.publicId) {
+      @let thumb = thumbFile(s);
+      <div class="queue-item">
+        <button type="button" class="thumb-btn" (click)="toggle(s)" [attr.aria-label]="'Open ' + s.reference">
+          @if (thumb && media()[thumb.publicId]; as src) { <img [src]="src" [alt]="s.yourName"> }
+          @else { <span class="thumb-empty"><i class="bi" [class.bi-film]="!thumb" [class.bi-image]="!!thumb"></i></span> }
+        </button>
+        <div>
+          <div class="fw-semibold">{{ s.yourName }} &amp; {{ s.parentName }} · {{ s.reference }}</div>
+          <div class="meta">{{ place(s) }} · {{ s.createdAtUtc + 'Z' | date: 'd MMM y, HH:mm' }}@if (!s.isAdult) { · <strong class="text-danger">Under 18</strong> }</div>
+          <div class="mt-1 pills">
+            <span class="pill">{{ kindName[s.kind] }}</span><span class="pill">{{ mediaLabel(s) }}</span>
+            @if (s.status !== 'Pending') {
+              <span class="status-chip" [class.ok]="s.status === 'Approved'" [class.no]="s.status === 'Rejected'">{{ s.status }}</span>
+              @if (s.reviewedBy) { <span class="small text-muted ms-1">by {{ s.reviewedBy }}</span> }
+            }
+          </div>
+        </div>
+        <div class="acts">
+          @if (s.status === 'Pending') {
+            <button class="btn btn-sm btn-success" type="button" (click)="approve(s)" [disabled]="busy() === s.publicId"><i class="bi bi-check-lg"></i> Approve</button>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="startReject(s)" [disabled]="busy() === s.publicId" [attr.aria-label]="'Reject ' + s.reference" title="Reject"><i class="bi bi-x-lg"></i></button>
+          } @else {
+            @if (s.status === 'Approved') {
+              <button class="btn btn-sm" type="button" [class.btn-warning]="s.isFeatured" [class.btn-outline-warning]="!s.isFeatured"
+                      (click)="setFeatured(s, !s.isFeatured)" [disabled]="busy() === s.publicId" [attr.aria-pressed]="!!s.isFeatured"
+                      [title]="s.isFeatured ? 'Featured on the home page — click to unfeature' : 'Feature on the home page'">
+                <i class="bi" [class.bi-star-fill]="s.isFeatured" [class.bi-star]="!s.isFeatured"></i> {{ s.isFeatured ? 'Featured' : 'Feature' }}
+              </button>
+            }
+            <button class="btn btn-sm btn-light" type="button" (click)="backToQueue(s)" [disabled]="busy() === s.publicId" title="Put back in the queue"><i class="bi bi-arrow-counterclockwise"></i> Back to queue</button>
+          }
+          <button class="btn btn-sm btn-light" type="button" (click)="toggle(s)" [attr.aria-expanded]="open() === s.publicId" title="Details"><i class="bi" [class.bi-chevron-down]="open() !== s.publicId" [class.bi-chevron-up]="open() === s.publicId"></i></button>
+        </div>
+      </div>
+
+      @if (rejecting() === s.publicId) {
+        <div class="reject-box" role="group" [attr.aria-label]="'Reject ' + s.reference">
+          <label class="form-label small fw-semibold" [for]="'rr-' + s.publicId">Reason</label>
+          <select class="form-select form-select-sm mb-2" [id]="'rr-' + s.publicId" [(ngModel)]="reject.reason">
+            @for (r of reasons; track r) { <option [value]="r">{{ r }}</option> }
+          </select>
+          <textarea class="form-control form-control-sm" rows="2" maxlength="200" placeholder="Optional note" aria-label="Optional note" [(ngModel)]="reject.note"></textarea>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-sm btn-danger" type="button" (click)="confirmReject(s)" [disabled]="busy() === s.publicId">Reject</button>
+            <button class="btn btn-sm btn-light" type="button" (click)="rejecting.set(null)">Cancel</button>
+          </div>
+        </div>
+      }
+
+      @if (open() === s.publicId) {
+        <div class="review-detail">
+          <div class="row g-3">
+            <div class="col-lg-7">
+              @for (f of s.files; track f.publicId) {
+                <figure class="mb-3">
+                  @if (media()[f.publicId]; as src) {
+                    @if (f.role === 'video') { <video [src]="src" controls playsinline preload="metadata"></video> }
+                    @else if (f.role === 'voice') { <audio [src]="src" controls preload="metadata" class="w-100"></audio> }
+                    @else { <a [href]="src" target="_blank" rel="noopener"><img [src]="src" [alt]="roleName(f.role)"></a> }
+                  } @else {
+                    <div class="thumb-empty large"><span class="spinner-border spinner-border-sm"></span></div>
+                  }
+                  <figcaption class="small text-muted">{{ roleName(f.role) }} · {{ size(f.sizeBytes) }}@if (f.fileName) { · {{ f.fileName }} }</figcaption>
+                </figure>
+              }
+            </div>
+            <div class="col-lg-5">
+              <dl class="review-list">
+                <dt>Shared by</dt><dd>{{ s.yourName }} @if (s.ownerEmailMasked) { <span class="text-muted">({{ s.ownerEmailMasked }})</span> }</dd>
+                <dt>{{ s.kind === 'family' ? 'Family' : 'With' }}</dt>
+                <dd>{{ s.parentName }}@if (s.relation) { ({{ s.relation }}) }@if (s.memoryYear) { · passed in {{ s.memoryYear }} }</dd>
+                @if (s.kind === 'thennow') { <dt>Years</dt><dd>{{ s.thenYear ?? '—' }} → {{ s.nowYear ?? '—' }}</dd> }
+                @if (s.kind === 'frame') {
+                  <dt>Frame</dt><dd>{{ frameName(s) }}</dd>
+                  <dt>Made from</dt><dd>{{ s.sourceReference }} <span class="text-muted">(the visitor's own approved selfie; the details are copied from it)</span></dd>
+                }
+                @if (s.kind === 'memory' && s.status === 'Approved') { <dt>Candles</dt><dd>{{ s.candles ?? 0 }} lit on the Memory Wall</dd> }
+                @if (s.kind === 'family') { <dt>People</dt><dd>{{ s.familySize }}@if (s.generations) { · {{ s.generations }} generations }</dd> }
+                <dt>From</dt><dd>{{ place(s) || '—' }}</dd>
+                <dt>Age</dt><dd>{{ s.isAdult ? '18 or older' : 'Under 18' }}</dd>
+                @if (!s.isAdult) { <dt>Parent / guardian</dt><dd>{{ s.guardianName }} · {{ s.guardianMobileMasked }}</dd> }
+                <dt>Message</dt><dd class="msg">{{ s.message || '—' }}</dd>
+                @if (s.reviewNote) { <dt>Reason</dt><dd>{{ s.reviewNote }}</dd> }
+                @if (s.reviewedAtUtc) { <dt>Reviewed</dt><dd>{{ s.reviewedAtUtc + 'Z' | date: 'd MMM y, HH:mm' }} by {{ s.reviewedBy ?? '—' }}</dd> }
+              </dl>
+              @if (!s.isAdult && s.status === 'Pending') {
+                <p class="small alert alert-warning py-2">Under 18: confirm with the parent / guardian before approving.</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    } @empty {
+      <p class="text-muted small mt-3 mb-0"><i class="bi bi-check2-all"></i>
+        {{ status() === 'Pending' ? 'All caught up — nothing waiting for review.' : 'Nothing here yet.' }}@if (filter() !== 'all' && data()?.items?.length) { (with this filter) }</p>
+    }
+
+    @if (pages() > 1) {
+      <nav class="d-flex justify-content-center align-items-center gap-2 mt-3" aria-label="Pages">
+        <button class="btn btn-sm btn-light" type="button" (click)="goPage(page() - 1)" [disabled]="page() === 1"><i class="bi bi-chevron-left"></i> Previous</button>
+        <span class="small text-muted">Page {{ page() }} of {{ pages() }}</span>
+        <button class="btn btn-sm btn-light" type="button" (click)="goPage(page() + 1)" [disabled]="page() >= pages()">Next <i class="bi bi-chevron-right"></i></button>
+      </nav>
+    }
+  }
+</section>

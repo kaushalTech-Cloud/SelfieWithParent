@@ -1,0 +1,285 @@
+<a class="small text-decoration-none d-inline-block mb-3" routerLink="/pages"><i class="bi bi-arrow-left"></i> All pages</a>
+
+@if (loading()) {
+  <p class="text-muted small"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+} @else if (loadError()) {
+  <div class="alert alert-danger small" role="alert">{{ loadError() }} <button class="btn btn-link btn-sm p-0 align-baseline" type="button" (click)="load()">Try again</button></div>
+} @else if (page(); as p) {
+  <div class="row g-4">
+    <!-- ===== Content ===== -->
+    <div class="col-xl-8 order-2 order-xl-1">
+      <section class="panel builder">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <h2 class="mb-0 me-auto">{{ en.title || 'Untitled page' }}</h2>
+          @if (dirty()) { <span class="badge text-bg-warning">Unsaved changes</span> }
+        </div>
+
+        <ul class="nav nav-pills lang-tabs mb-3" role="tablist" aria-label="Language">
+          @for (l of languages; track l.code) {
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" type="button" role="tab" [class.active]="lang() === l.code" [attr.aria-selected]="lang() === l.code" (click)="switchLang(l.code)">
+                {{ l.name }}
+                @if (l.code !== 'en') { <i class="bi ms-1" [class.bi-check-circle-fill]="drafts[l.code].exists" [class.bi-circle]="!drafts[l.code].exists" [title]="drafts[l.code].exists ? 'Translated' : 'Not translated yet (shows English)'"></i> }
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (pendingLang()) {
+          <div class="alert alert-warning small d-flex flex-wrap align-items-center gap-2" role="alert">
+            <span class="me-auto">You have unsaved changes in {{ langName() }}. Save them before switching?</span>
+            <button class="btn btn-sm btn-accent" type="button" (click)="save()" [disabled]="saving()">Save and switch</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="discardAndSwitch()" [disabled]="saving()">Discard changes</button>
+            <button class="btn btn-sm btn-light" type="button" (click)="pendingLang.set(null)">Stay here</button>
+          </div>
+        }
+
+        <div (input)="dirty.set(true)" (change)="dirty.set(true)">
+          <!-- Title + description -->
+          @if (lang() === 'en') {
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="pgTitle">Page title</label>
+                <input class="form-control" id="pgTitle" [(ngModel)]="en.title" [ngModelOptions]="{ standalone: true }" maxlength="120">
+                <div class="form-text">Shown in the browser tab and when the page is shared.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="pgDesc">Description</label>
+                <textarea class="form-control" id="pgDesc" rows="2" [(ngModel)]="en.description" [ngModelOptions]="{ standalone: true }" maxlength="300"></textarea>
+                <div class="form-text">For search engines and share previews.</div>
+              </div>
+            </div>
+          } @else {
+            <p class="small text-muted">Translate the text below. Layout, links and images come from the English version. Anything left empty shows in English.</p>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="trTitle">Page title</label>
+                <div class="en-ref">{{ en.title }}</div>
+                <input class="form-control" id="trTitle" [(ngModel)]="draft().title" [ngModelOptions]="{ standalone: true }" maxlength="120" [attr.lang]="lang()">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="trDesc">Description</label>
+                <div class="en-ref">{{ en.description || '—' }}</div>
+                <textarea class="form-control" id="trDesc" rows="2" [(ngModel)]="draft().description" [ngModelOptions]="{ standalone: true }" maxlength="300" [attr.lang]="lang()"></textarea>
+              </div>
+            </div>
+          }
+
+          <!-- Blocks -->
+          <h3 class="builder-heading">Blocks</h3>
+          @for (b of blocks; track b.id; let i = $index, last = $last) {
+            @let d = def($any(b['type']));
+            @if (lang() === 'en') { <ng-container [ngTemplateOutlet]="addSlot" [ngTemplateOutletContext]="{ $implicit: i }" /> }
+            <div class="block-card" [class.is-hidden]="b['hidden']" [class.is-open]="isOpen(b.id)">
+              <div class="block-head">
+                <button class="block-toggle" type="button" (click)="toggle(b.id)" [attr.aria-expanded]="isOpen(b.id)">
+                  <i class="bi" [class]="d?.icon ?? 'bi-square'"></i>
+                  <span class="block-name">{{ d?.name ?? b['type'] }}</span>
+                  <span class="block-summary text-truncate">{{ summary(b) }}</span>
+                  @if (b['hidden']) { <span class="badge text-bg-secondary">Hidden</span> }
+                  <i class="bi ms-auto" [class.bi-chevron-down]="!isOpen(b.id)" [class.bi-chevron-up]="isOpen(b.id)"></i>
+                </button>
+                @if (lang() === 'en') {
+                  <div class="block-actions">
+                    <button class="btn btn-sm btn-light" type="button" (click)="move(blocks, i, -1)" [disabled]="i === 0" title="Move up" aria-label="Move up"><i class="bi bi-arrow-up"></i></button>
+                    <button class="btn btn-sm btn-light" type="button" (click)="move(blocks, i, 1)" [disabled]="last" title="Move down" aria-label="Move down"><i class="bi bi-arrow-down"></i></button>
+                    <button class="btn btn-sm btn-light" type="button" (click)="toggleHidden(b)" [title]="b['hidden'] ? 'Show on the website' : 'Hide from the website'" [attr.aria-label]="b['hidden'] ? 'Show' : 'Hide'"><i class="bi" [class.bi-eye-slash]="!b['hidden']" [class.bi-eye]="b['hidden']"></i></button>
+                    <button class="btn btn-sm btn-light" type="button" (click)="copyBlock(i)" title="Make a copy" aria-label="Make a copy"><i class="bi bi-copy"></i></button>
+                    <button class="btn btn-sm btn-light text-danger" type="button" (click)="confirmDelete.set(b.id)" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
+                  </div>
+                }
+              </div>
+              @if (confirmDelete() === b.id) {
+                <div class="alert alert-danger small d-flex flex-wrap align-items-center gap-2 m-2" role="alert">
+                  <span class="me-auto"><strong>Delete this {{ d?.name ?? 'block' }}?</strong> Its translations go with it when you save.</span>
+                  <button class="btn btn-sm btn-danger" type="button" (click)="removeBlock(i)">Delete block</button>
+                  <button class="btn btn-sm btn-light" type="button" (click)="confirmDelete.set(null)">Cancel</button>
+                </div>
+              }
+              @if (isOpen(b.id) && d) {
+                <div class="block-body">
+                  @if (lang() === 'en') {
+                    <ng-container [ngTemplateOutlet]="editNode" [ngTemplateOutletContext]="{ $implicit: b, fields: d.fields, lists: d.lists }" />
+                  } @else {
+                    <ng-container [ngTemplateOutlet]="translateNode" [ngTemplateOutletContext]="{ $implicit: b, fields: d.fields, lists: d.lists }" />
+                  }
+                </div>
+              }
+            </div>
+          } @empty {
+            <p class="text-muted small">This page has no blocks yet. Start with a page header.</p>
+          }
+          @if (lang() === 'en') { <ng-container [ngTemplateOutlet]="addSlot" [ngTemplateOutletContext]="{ $implicit: blocks.length }" /> }
+        </div>
+
+        <div class="save-bar">
+          @for (e of errors(); track e) { <div class="alert alert-danger py-2 small mb-2" role="alert">{{ e }}</div> }
+          @if (notice()) { <div class="alert alert-success py-2 small mb-2" role="status">{{ notice() }}</div> }
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-accent" type="button" (click)="save()" [disabled]="saving() || !dirty()">
+              @if (saving()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-check2"></i> }
+              Save {{ lang() === 'en' ? 'English version' : langName() + ' translation' }}
+            </button>
+            @if (dirty()) { <button class="btn btn-light" type="button" (click)="load()" [disabled]="saving()">Discard changes</button> }
+            @if (lang() !== 'en' && drafts[lang()].exists) {
+              <button class="btn btn-outline-danger ms-auto" type="button" (click)="removeTranslation()" [disabled]="saving()"><i class="bi bi-trash"></i> Remove translation</button>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== Page settings ===== -->
+    <div class="col-xl-4 order-1 order-xl-2">
+      <section class="panel builder-side">
+        <h2>Page settings</h2>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" for="pgSlug">Web address</label>
+          <div class="input-group">
+            <span class="input-group-text">/</span>
+            <input class="form-control" id="pgSlug" [(ngModel)]="settings.slug" [ngModelOptions]="{ standalone: true }" maxlength="60" autocomplete="off">
+          </div>
+          <div class="form-text">Changing it breaks old links: update the menus too.</div>
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" role="switch" id="pgPublished" [(ngModel)]="settings.isPublished" [ngModelOptions]="{ standalone: true }">
+          <label class="form-check-label small fw-semibold" for="pgPublished">Published (visitors can see it)</label>
+        </div>
+        @if (settingsMessage(); as m) { <div class="alert py-2 small" [class.alert-success]="m.ok" [class.alert-danger]="!m.ok" role="status">{{ m.text }}</div> }
+        <button class="btn btn-outline-secondary w-100" type="button" (click)="saveSettings()" [disabled]="settingsBusy()">
+          @if (settingsBusy()) { <span class="spinner-border spinner-border-sm"></span> } Save settings
+        </button>
+        @if (p.isPublished) {
+          <a class="btn btn-light w-100 mt-2" [href]="site + '/' + p.slug + (lang() === 'en' ? '' : '?lang=' + lang())" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View on the website</a>
+        }
+        <p class="small text-muted mt-3 mb-0">Last change {{ p.updatedAtUtc + 'Z' | date: 'd MMM y, HH:mm' }}</p>
+      </section>
+    </div>
+  </div>
+
+  @if (picking(); as pk) {
+    <app-image-library [current]="str(pk.node[pk.key])" (chosen)="chooseImage($event)" (closed)="picking.set(null)" />
+  }
+}
+
+<!-- "Add a block" button / chooser at a position -->
+<ng-template #addSlot let-at>
+  @if (addingAt() === at) {
+    <div class="block-chooser" role="group" aria-label="Choose a block">
+      <div class="d-flex align-items-center mb-2"><strong class="small me-auto">Add a block</strong>
+        <button class="btn btn-sm btn-light" type="button" (click)="addingAt.set(null)" aria-label="Close"><i class="bi bi-x-lg"></i></button></div>
+      <div class="chooser-grid">
+        @for (t of blockTypes; track t.type) {
+          <button class="chooser-item" type="button" (click)="addBlock(t.type, at)">
+            <i class="bi" [class]="t.icon"></i><span><strong>{{ t.name }}</strong><small>{{ t.description }}</small></span>
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="add-slot"><button class="btn btn-sm btn-light" type="button" (click)="addingAt.set(at)"><i class="bi bi-plus-lg"></i> Add block</button></div>
+  }
+</ng-template>
+
+<!-- English: every field of a block / entry, then its lists -->
+<ng-template #editNode let-node let-fields="fields" let-lists="lists">
+  <div class="row g-3">
+    @for (f of fields; track f.key) {
+      <div [class]="f.kind === 'textarea' ? 'col-12' : 'col-md-6'">
+        <ng-container [ngTemplateOutlet]="field" [ngTemplateOutletContext]="{ $implicit: node, f: f }" />
+      </div>
+    }
+  </div>
+  @for (l of lists; track l.key) {
+    <fieldset class="list-box">
+      <legend>{{ l.label }}</legend>
+      @for (item of listOf(node, l); track item.id; let j = $index, lastItem = $last) {
+        <div class="list-item">
+          <div class="list-item-head">
+            <span class="small fw-semibold text-capitalize">{{ l.item }} {{ j + 1 }}</span>
+            <span class="ms-auto">
+              <button class="btn btn-sm btn-link p-0 me-2" type="button" (click)="move(listOf(node, l), j, -1)" [disabled]="j === 0" [attr.aria-label]="'Move ' + l.item + ' up'" title="Move up"><i class="bi bi-arrow-up"></i></button>
+              <button class="btn btn-sm btn-link p-0 me-2" type="button" (click)="move(listOf(node, l), j, 1)" [disabled]="lastItem" [attr.aria-label]="'Move ' + l.item + ' down'" title="Move down"><i class="bi bi-arrow-down"></i></button>
+              <button class="btn btn-sm btn-link p-0 text-danger" type="button" (click)="removeItem(node, l, j)" [attr.aria-label]="'Remove ' + l.item" title="Remove"><i class="bi bi-x-circle"></i></button>
+            </span>
+          </div>
+          <ng-container [ngTemplateOutlet]="editNode" [ngTemplateOutletContext]="{ $implicit: item, fields: l.fields, lists: l.lists ?? [] }" />
+        </div>
+      }
+      <button class="btn btn-sm btn-outline-secondary" type="button" (click)="addItem(node, l)"><i class="bi bi-plus"></i> Add {{ l.item }}</button>
+    </fieldset>
+  }
+</ng-template>
+
+<!-- One English field -->
+<ng-template #field let-node let-f="f">
+  @let fid = 'f-' + node.id + '-' + f.key;
+  @switch (f.kind) {
+    @case ('bool') {
+      <div class="form-check mt-4">
+        <input class="form-check-input" type="checkbox" [id]="fid" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }">
+        <label class="form-check-label small fw-semibold" [for]="fid">{{ f.label }}</label>
+      </div>
+    }
+    @case ('image') {
+      <label class="form-label small fw-semibold" [for]="fid">{{ f.label }}</label>
+      <div class="image-field">
+        @if (node[f.key]) { <img [src]="img(node[f.key])" alt=""> } @else { <span class="image-empty"><i class="bi bi-image"></i></span> }
+        <input class="form-control form-control-sm" [id]="fid" [value]="node[f.key] ?? ''" readonly>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="picking.set({ node: node, key: f.key })">Choose</button>
+        @if (node[f.key]) { <button class="btn btn-sm btn-link text-danger" type="button" (click)="node[f.key] = ''; dirty.set(true)" aria-label="Remove image"><i class="bi bi-x-circle"></i></button> }
+      </div>
+    }
+    @default {
+      <label class="form-label small fw-semibold" [for]="fid">{{ f.label }}</label>
+      @switch (f.kind) {
+        @case ('textarea') { <textarea class="form-control" [id]="fid" rows="3" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="2000"></textarea> }
+        @case ('select') {
+          <select class="form-select" [id]="fid" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }">
+            @for (o of f.options; track o) { <option [value]="o">{{ o }}</option> }
+          </select>
+        }
+        @case ('number') { <input class="form-control" type="number" [id]="fid" [min]="f.min" [max]="f.max" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }"> }
+        @case ('icon') {
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi" [class]="node[f.key] || 'bi-dash'"></i></span>
+            <input class="form-control" [id]="fid" list="icon-list" placeholder="bi-heart" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="43">
+          </div>
+        }
+        @case ('url') { <input class="form-control" [id]="fid" placeholder="/about, https://…, mailto:…" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="300"> }
+        @case ('short') { <input class="form-control" [id]="fid" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="40"> }
+        @case ('anchor') { <input class="form-control" [id]="fid" placeholder="get-involved" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="40"> }
+        @default { <input class="form-control" [id]="fid" [(ngModel)]="node[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="2000"> }
+      }
+    }
+  }
+  @if (f.hint) { <div class="form-text">{{ f.hint }}</div> }
+</ng-template>
+
+<!-- Other languages: English text next to the translation box, for every text field that has English text -->
+<ng-template #translateNode let-node let-fields="fields" let-lists="lists">
+  @for (f of textFields(fields, node); track f.key) {
+    @let fid = 't-' + node.id + '-' + f.key;
+    <div class="mb-3">
+      <label class="form-label small fw-semibold" [for]="fid">{{ f.label }}</label>
+      <div class="en-ref">{{ node[f.key] }}</div>
+      @if (f.kind === 'textarea') {
+        <textarea class="form-control" [id]="fid" rows="3" [(ngModel)]="trOf(node.id)[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="2000" [attr.lang]="lang()"></textarea>
+      } @else {
+        <input class="form-control" [id]="fid" [(ngModel)]="trOf(node.id)[f.key]" [ngModelOptions]="{ standalone: true }" maxlength="2000" [attr.lang]="lang()">
+      }
+    </div>
+  }
+  @for (l of lists; track l.key) {
+    @for (item of listOf(node, l); track item.id; let j = $index) {
+      <div class="list-item">
+        <div class="small fw-semibold text-capitalize mb-2">{{ l.item }} {{ j + 1 }}</div>
+        <ng-container [ngTemplateOutlet]="translateNode" [ngTemplateOutletContext]="{ $implicit: item, fields: l.fields, lists: l.lists ?? [] }" />
+      </div>
+    }
+  }
+</ng-template>
+
+<datalist id="icon-list">
+  @for (i of icons; track i) { <option [value]="i"></option> }
+</datalist>

@@ -1,0 +1,181 @@
+<ul class="nav nav-pills lang-tabs mb-3" role="tablist" aria-label="Menu">
+  @for (m of menus; track m.code) {
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" type="button" role="tab" [class.active]="menuCode() === m.code" [attr.aria-selected]="menuCode() === m.code" (click)="switchMenu(m.code)">{{ m.name }}</button>
+    </li>
+  }
+</ul>
+
+<div class="row g-4">
+  <!-- Entries -->
+  <div class="col-xl-7">
+    <section class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h2 class="mb-0">Entries</h2>
+        <button class="btn btn-light btn-sm" type="button" (click)="load()" [disabled]="loading()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+      </div>
+      <p class="small text-muted">{{ menuHint() }} Changes show on the website straight away.</p>
+      @if (listNotice()) { <div class="alert alert-success py-2 small" role="status">{{ listNotice() }}</div> }
+      @if (listError()) { <div class="alert alert-danger py-2 small" role="alert">{{ listError() }}</div> }
+      @if (loading()) {
+        <p class="text-muted small py-3"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+      } @else if (loadError()) {
+        <div class="alert alert-danger small" role="alert">{{ loadError() }}</div>
+      } @else {
+        @let top = tree();
+        <ul class="menu-tree">
+          @for (node of top; track node.item.menuItemId; let i = $index, last = $last) {
+            <li>
+              <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: node.item, list: topItems(), index: i, last: last }" />
+              @if (node.item.itemType === 'Dropdown') {
+                <ul class="menu-tree sub">
+                  @for (c of node.children; track c.menuItemId; let j = $index, lastChild = $last) {
+                    <li><ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: c, list: node.children, index: j, last: lastChild }" /></li>
+                  } @empty {
+                    <li class="small text-muted ps-2">Empty dropdown: it isn't shown on the website.</li>
+                  }
+                  <li><button class="btn btn-sm btn-link" type="button" (click)="startAdd(node.item)"><i class="bi bi-plus"></i> Add inside "{{ node.item.label }}"</button></li>
+                </ul>
+              }
+            </li>
+          } @empty {
+            <li class="small text-muted">No entries yet.</li>
+          }
+        </ul>
+        <button class="btn btn-sm btn-outline-secondary mt-2" type="button" (click)="startAdd(null)"><i class="bi bi-plus"></i> Add to the top level</button>
+      }
+    </section>
+  </div>
+
+  <!-- Add / edit an entry (one form) -->
+  <div class="col-xl-5">
+    <section class="panel staff-form" #formPanel [class.editing]="editing()">
+      @if (editing(); as e) {
+        <h2>Edit "{{ e.label }}"</h2>
+      } @else {
+        <h2>Add an entry</h2>
+      }
+      <form (ngSubmit)="submit()" novalidate [attr.aria-label]="editing() ? 'Edit menu entry' : 'Add a menu entry'">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label small fw-semibold" for="mType">Type</label>
+            <select class="form-select" id="mType" name="itemType" [(ngModel)]="form.itemType">
+              @for (t of types; track t.code) { <option [value]="t.code">{{ t.name }}</option> }
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label small fw-semibold" for="mParent">Where</label>
+            <select class="form-select" id="mParent" name="parent" [(ngModel)]="form.parentMenuItemId" (ngModelChange)="suggestKey()">
+              <option [ngValue]="null">Top level</option>
+              @for (d of dropdowns(); track d.menuItemId) { <option [ngValue]="d.menuItemId">Inside "{{ d.label }}"</option> }
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold" for="mLabel">Label (English)</label>
+            <input class="form-control" id="mLabel" name="label" [(ngModel)]="form.label" (ngModelChange)="suggestKey()" maxlength="100" autocomplete="off">
+          </div>
+          @if (form.itemType === 'Link' || form.itemType === 'Button') {
+            <div class="col-12">
+              <label class="form-label small fw-semibold" for="mUrl">Link</label>
+              <input class="form-control" id="mUrl" name="url" [(ngModel)]="form.url" maxlength="300" placeholder="/about, https://…, mailto:…" autocomplete="off">
+              @if (pages().length) {
+                <select class="form-select form-select-sm mt-2" aria-label="Link to a content page" (change)="pickPage($any($event.target).value); $any($event.target).value = ''">
+                  <option value="">…or pick a content page</option>
+                  @for (p of pages(); track p.pageId) { <option [value]="p.slug">{{ p.title }} (/{{ p.slug }}){{ p.isPublished ? '' : ' — draft' }}</option> }
+                </select>
+              }
+            </div>
+          }
+          <div class="col-sm-6">
+            <label class="form-label small fw-semibold" for="mIcon">Icon <span class="text-muted fw-normal">(optional)</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi" [class]="form.icon || 'bi-dash'"></i></span>
+              <input class="form-control" id="mIcon" name="icon" [(ngModel)]="form.icon" maxlength="40" placeholder="bi-heart" autocomplete="off">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label small fw-semibold" for="mVis">Show to</label>
+            <select class="form-select" id="mVis" name="visibility" [(ngModel)]="form.visibility">
+              <option value="Always">Everyone</option>
+              <option value="SignedIn">Signed-in visitors</option>
+              <option value="SignedOut">Signed-out visitors</option>
+            </select>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="mActive" name="isActive" [(ngModel)]="form.isActive">
+              <label class="form-check-label small" for="mActive">Shown on the website</label>
+            </div>
+            @if (form.itemType === 'Link' || form.itemType === 'Button') {
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="mNewTab" name="opensNewTab" [(ngModel)]="form.opensNewTab">
+                <label class="form-check-label small" for="mNewTab">Opens in a new tab</label>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (form.itemType !== 'Divider') {
+          <fieldset class="list-box mt-3">
+            <legend>Label in other languages</legend>
+            <p class="small text-muted mb-2">Leave empty to show the English label.</p>
+            @for (l of translations; track l.code) {
+              <div class="row g-2 align-items-center mb-2">
+                <label class="col-sm-4 col-form-label col-form-label-sm" [for]="'mL-' + l.code">{{ l.name }}</label>
+                <div class="col-sm-8"><input class="form-control form-control-sm" [id]="'mL-' + l.code" [name]="'label-' + l.code" [(ngModel)]="form.labels[l.code]" maxlength="100" [attr.lang]="l.code" autocomplete="off"></div>
+              </div>
+            }
+          </fieldset>
+        }
+
+        <details class="mt-3 small">
+          <summary class="text-muted">Advanced</summary>
+          <label class="form-label small fw-semibold mt-2" for="mKey">Key</label>
+          <input class="form-control form-control-sm" id="mKey" name="itemKey" [(ngModel)]="form.itemKey" (ngModelChange)="keyEdited = true" maxlength="50" autocomplete="off">
+          <div class="form-text">A unique name for this entry inside the menu (lower-case letters, numbers, dots and hyphens).</div>
+        </details>
+
+        @for (e of errors(); track e) { <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">{{ e }}</div> }
+        @if (notice()) { <div class="alert alert-success py-2 small mt-3 mb-0" role="status">{{ notice() }}</div> }
+        <button class="btn btn-accent w-100 mt-3" type="submit" [disabled]="saving()">
+          @if (saving()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi" [class.bi-plus-lg]="!editing()" [class.bi-check2]="editing()"></i> }
+          {{ editing() ? 'Save changes' : 'Add entry' }}
+        </button>
+        @if (editing()) { <button class="btn btn-light w-100 mt-2" type="button" (click)="cancelEdit()" [disabled]="saving()">Cancel editing</button> }
+      </form>
+    </section>
+  </div>
+</div>
+
+<!-- One entry in the list -->
+<ng-template #row let-i let-list="list" let-index="index" let-last="last">
+  <div class="menu-row" [class.inactive]="!i.isActive" [class.table-active]="editing()?.menuItemId === i.menuItemId" [class.danger]="confirming() === i.menuItemId">
+    @if (i.icon) { <i class="bi text-muted" [class]="i.icon"></i> }
+    <span class="fw-semibold">{{ i.itemType === 'Divider' ? '— divider —' : i.label }}</span>
+    <span class="type-pill">{{ typeName(i.itemType) }}</span>
+    @if (i.url) { <span class="small text-muted text-truncate">{{ i.url }}</span> }
+    @if (!i.isActive) { <span class="badge text-bg-secondary">Hidden</span> }
+    @if (i.visibility !== 'Always') { <span class="badge text-bg-light">{{ i.visibility === 'SignedIn' ? 'Signed in' : 'Signed out' }}</span> }
+    @if (i.itemType !== 'Divider') { <span class="small text-muted" title="Translated labels">{{ translatedCount(i) }}/5 <i class="bi bi-translate"></i></span> }
+    <span class="ms-auto text-nowrap">
+      <button class="btn btn-sm btn-light" type="button" (click)="move(list, index, -1)" [disabled]="busy() || index === 0" title="Move up" [attr.aria-label]="'Move ' + i.label + ' up'"><i class="bi bi-arrow-up"></i></button>
+      <button class="btn btn-sm btn-light" type="button" (click)="move(list, index, 1)" [disabled]="busy() || last" title="Move down" [attr.aria-label]="'Move ' + i.label + ' down'"><i class="bi bi-arrow-down"></i></button>
+      @if (canEdit(i)) {
+        <button class="btn btn-sm ms-1" type="button" [class.btn-outline-success]="!i.isActive" [class.btn-outline-secondary]="i.isActive" (click)="toggleActive(i)"
+                [disabled]="busy()" [title]="i.isActive ? 'Hide from visitors' : 'Show to visitors'" [attr.aria-label]="(i.isActive ? 'Hide ' : 'Show ') + i.label">
+          <i class="bi" [class.bi-eye-slash]="i.isActive" [class.bi-eye]="!i.isActive"></i></button>
+        <button class="btn btn-sm btn-outline-secondary ms-1" type="button" (click)="startEdit(i)" [disabled]="saving()" title="Edit" [attr.aria-label]="'Edit ' + i.label"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger ms-1" type="button" (click)="confirming.set(i.menuItemId); listNotice.set('')" [disabled]="busy()" title="Delete" [attr.aria-label]="'Delete ' + i.label"><i class="bi bi-trash"></i></button>
+      } @else {
+        <span class="small text-muted ms-1" title="Built-in action: it can be moved but not changed here"><i class="bi bi-lock"></i></span>
+      }
+    </span>
+  </div>
+  @if (confirming() === i.menuItemId) {
+    <div class="alert alert-danger small d-flex flex-wrap align-items-center gap-2 my-1" role="alert">
+      <span class="me-auto"><strong>Delete "{{ i.label }}"?</strong> @if (i.itemType === 'Dropdown') { A dropdown must be empty first. } This can't be undone.</span>
+      <button class="btn btn-sm btn-danger" type="button" (click)="remove(i)" [disabled]="busy()">Delete</button>
+      <button class="btn btn-sm btn-light" type="button" (click)="confirming.set(null)" [disabled]="busy()">Cancel</button>
+    </div>
+  }
+</ng-template>

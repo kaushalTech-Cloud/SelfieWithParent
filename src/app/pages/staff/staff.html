@@ -1,0 +1,142 @@
+<div class="row g-4">
+  <!-- Add a staff member, or edit one (the same form) -->
+  <div class="col-xl-4">
+    <section class="panel staff-form" #formPanel [class.editing]="editing()">
+      @if (editing(); as e) {
+        <h2>Edit staff member</h2>
+        <p class="small text-muted">Editing <strong>{{ e.fullName || e.email }}</strong>. Changing the role signs them out so the new role applies at once.</p>
+      } @else {
+        <h2>Add a staff member</h2>
+        <p class="small text-muted">Creates an account with a staff role. If the email already has an account, that account gets the role instead.</p>
+      }
+      <form #f="ngForm" (ngSubmit)="submit(f)" novalidate [attr.aria-label]="editing() ? 'Edit staff member' : 'Add a staff member'">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" for="sName">Full name</label>
+          <input #nameBox class="form-control" id="sName" name="fullName" [(ngModel)]="form.fullName" maxlength="60" autocomplete="off" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" for="sEmail">{{ editing() ? 'Sign-in email' : 'Email' }}</label>
+          <input class="form-control" id="sEmail" name="email" type="email" inputmode="email" [(ngModel)]="form.email" maxlength="254" autocomplete="off" required>
+          <div class="form-text">They sign in to the admin site with this email.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" for="sRole">Role</label>
+          <select class="form-select" id="sRole" name="roleCode" [(ngModel)]="form.roleCode">
+            @for (r of roles; track r.code) { <option [value]="r.code">{{ r.name }}</option> }
+          </select>
+          <div class="form-text">{{ roleHint() }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" for="sPassword">{{ editing() ? 'New password' : 'First password' }} <span class="text-muted fw-normal">(optional)</span></label>
+          <div class="input-group">
+            <input class="form-control" id="sPassword" name="password" [type]="showPassword() ? 'text' : 'password'"
+                   [(ngModel)]="form.password" maxlength="128" autocomplete="new-password">
+            <button class="btn btn-outline-secondary" type="button" (click)="showPassword.set(!showPassword())"
+                    [attr.aria-pressed]="showPassword()" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+              <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+            </button>
+          </div>
+          <div class="form-text">
+            @if (editing()) { At least 8 characters. Leave empty to keep their current password. }
+            @else { At least 8 characters. Leave empty and they'll sign in with a code sent to their email. }
+          </div>
+        </div>
+        @if (form.password) {
+          <div class="mb-3">
+            <label class="form-label small fw-semibold" for="sConfirm">{{ editing() ? 'Confirm new password' : 'Confirm password' }}</label>
+            <input class="form-control" id="sConfirm" name="confirm" [type]="showPassword() ? 'text' : 'password'"
+                   [(ngModel)]="form.confirm" maxlength="128" autocomplete="new-password">
+          </div>
+        }
+        @for (e of errors(); track e) { <div class="alert alert-danger py-2 small mb-2" role="alert">{{ e }}</div> }
+        @if (notice()) { <div class="alert alert-success py-2 small mb-2" role="status">{{ notice() }}</div> }
+        <button class="btn btn-accent w-100" type="submit" [disabled]="saving()">
+          @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
+          @else { <i class="bi" [class.bi-person-plus]="!editing()" [class.bi-check2]="editing()"></i> }
+          {{ editing() ? 'Save changes' : 'Add staff member' }}
+        </button>
+        @if (editing()) {
+          <button class="btn btn-light w-100 mt-2" type="button" (click)="cancelEdit(f)" [disabled]="saving()">Cancel editing</button>
+        }
+      </form>
+    </section>
+  </div>
+
+  <!-- Current staff -->
+  <div class="col-xl-8">
+    <section class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">Staff ({{ staff().length }})</h2>
+        <button class="btn btn-light btn-sm" type="button" (click)="load()" [disabled]="loading()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+      </div>
+      @if (listNotice()) { <div class="alert alert-success py-2 small" role="status">{{ listNotice() }}</div> }
+      @if (listError()) { <div class="alert alert-danger py-2 small" role="alert">{{ listError() }}</div> }
+      @if (loading()) {
+        <p class="text-muted small py-3"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+      } @else if (loadError()) {
+        <div class="alert alert-danger small" role="alert">{{ loadError() }}</div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle staff-table mb-0">
+            <thead><tr><th scope="col">Name</th><th scope="col">Sign-in</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Last sign-in</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+              @for (s of staff(); track s.publicId) {
+                @let who = s.fullName || s.email || 'staff member';
+                <tr [class.table-danger]="confirming()?.id === s.publicId" [class.row-inactive]="!s.isActive" [class.table-active]="editing()?.publicId === s.publicId">
+                  <td class="fw-semibold">{{ s.fullName || '—' }} @if (isMe(s)) { <span class="text-muted small fw-normal">(you)</span> }</td>
+                  <td class="small">{{ s.email ?? s.mobileMasked ?? '—' }}</td>
+                  <td>@for (r of s.roles; track r) { <span class="role-pill" [class.super]="r === 'SuperAdmin'">{{ roleName(r) }}</span> }</td>
+                  <td><span class="status-pill" [class.on]="s.isActive">{{ s.isActive ? 'Active' : 'Inactive' }}</span></td>
+                  <td class="small text-muted">{{ s.lastSignInAtUtc ? (s.lastSignInAtUtc + 'Z' | date: 'd MMM y, HH:mm') : 'Never' }}</td>
+                  <td class="text-end text-nowrap">
+                    @if (canManage(s)) {
+                      <button class="btn btn-sm btn-outline-secondary" type="button" (click)="startEdit(s, f)" [disabled]="busy() || saving()"
+                              [class.active]="editing()?.publicId === s.publicId"
+                              [attr.aria-label]="'Edit ' + who" title="Edit"><i class="bi bi-pencil"></i></button>
+                      <button class="btn btn-sm ms-1" type="button" [class.btn-outline-warning]="s.isActive" [class.btn-outline-success]="!s.isActive"
+                              (click)="toggleActive(s)" [disabled]="busy()"
+                              [attr.aria-label]="(s.isActive ? 'Make inactive: ' : 'Make active: ') + who" [title]="s.isActive ? 'Make inactive' : 'Make active'">
+                        <i class="bi" [class.bi-pause-circle]="s.isActive" [class.bi-play-circle]="!s.isActive"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger ms-1" type="button" (click)="askDelete(s)" [disabled]="busy()"
+                              [attr.aria-label]="'Delete ' + who" title="Delete"><i class="bi bi-trash"></i></button>
+                    }
+                  </td>
+                </tr>
+
+                <!-- "Are you sure?" for delete / make inactive -->
+                @if (confirming()?.id === s.publicId) {
+                  <tr class="table-danger">
+                    <td colspan="6">
+                      <div class="d-flex flex-wrap align-items-center gap-2 small" role="alert">
+                        @if (confirming()?.kind === 'delete') {
+                          <span><strong>Delete {{ who }}?</strong> Their account, details and roles are removed and they're signed out everywhere. This can't be undone.</span>
+                        } @else {
+                          <span><strong>Make {{ who }} inactive?</strong> They're signed out everywhere and can't sign in until you make them active again. Nothing is deleted.</span>
+                        }
+                        <span class="ms-auto d-flex gap-2">
+                          @if (confirming()?.kind === 'delete') {
+                            <button class="btn btn-sm btn-danger" type="button" (click)="confirmDelete(s, f)" [disabled]="busy()">
+                              @if (busy()) { <span class="spinner-border spinner-border-sm"></span> } Delete account
+                            </button>
+                          } @else {
+                            <button class="btn btn-sm btn-warning" type="button" (click)="setActive(s, false)" [disabled]="busy()">
+                              @if (busy()) { <span class="spinner-border spinner-border-sm"></span> } Make inactive
+                            </button>
+                          }
+                          <button class="btn btn-sm btn-light" type="button" (click)="confirming.set(null)" [disabled]="busy()">Cancel</button>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              } @empty {
+                <tr><td colspan="6" class="text-muted small">No staff yet.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
+</div>

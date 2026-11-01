@@ -1,0 +1,97 @@
+<div class="login-page">
+  <section class="login-art">
+    <img src="img/logo-light.svg" alt="Selfie with Parent" height="48">
+    <div>
+      <h2>Every photo here is someone's family.</h2>
+      <p>Review submissions with care, feature the stories that move you, and keep the gallery a safe and kind place.</p>
+    </div>
+    <small class="opacity-75">Team access only</small>
+  </section>
+
+  <section class="login-form-wrap">
+    <div class="login-card">
+      @if (step() === 'start') {
+        <form (ngSubmit)="start()" novalidate>
+          <h1>Admin sign in</h1>
+          <p class="text-muted small mb-3">Use your team account. Only staff can open the admin site.</p>
+
+          <div class="signin-method" role="tablist" aria-label="Sign in with">
+            <button type="button" role="tab" [class.active]="method() === 'email'" [attr.aria-selected]="method() === 'email'" (click)="chooseMethod('email')">
+              <i class="bi bi-envelope"></i> Email
+            </button>
+            <button type="button" role="tab" [class.active]="method() === 'mobile'" [attr.aria-selected]="method() === 'mobile'" (click)="chooseMethod('mobile')">
+              <i class="bi bi-phone"></i> Mobile
+            </button>
+          </div>
+
+          @if (method() === 'email') {
+            <div class="mb-3">
+              <label class="form-label fw-semibold small" for="email">Work email</label>
+              <input class="form-control" id="email" name="email" type="email" inputmode="email" maxlength="254"
+                     [attr.autocomplete]="usePassword() ? 'username' : 'email'" placeholder="name@example.com" [(ngModel)]="email" required>
+            </div>
+            @if (usePassword()) {
+              <div class="mb-2">
+                <label class="form-label fw-semibold small" for="password">Password</label>
+                <div class="input-group">
+                  <input class="form-control" id="password" name="password" [type]="showPassword() ? 'text' : 'password'"
+                         autocomplete="current-password" maxlength="128" [(ngModel)]="password" required>
+                  <button class="btn btn-outline-secondary" type="button" (click)="showPassword.set(!showPassword())"
+                          [attr.aria-pressed]="showPassword()" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+                    <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                  </button>
+                </div>
+              </div>
+            }
+            <button type="button" class="btn btn-link btn-sm p-0 mb-3 link-accent" (click)="togglePassword()">
+              {{ usePassword() ? 'Forgot it? Get a code by email instead' : 'Use a password instead' }}
+            </button>
+          } @else {
+            <div class="mb-2">
+              <label class="form-label fw-semibold small" for="phone">Mobile number</label>
+              <div class="input-group">
+                <app-dial-code-select id="dial" [(value)]="dial" />
+                <input class="form-control" id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                       placeholder="98765 43210" maxlength="16" [(ngModel)]="phone" required>
+              </div>
+            </div>
+            <div class="d-flex gap-3 small mb-3">
+              <label><input type="radio" name="channel" value="sms" [(ngModel)]="channel"> Send by SMS</label>
+              <label><input type="radio" name="channel" value="whatsapp" [(ngModel)]="channel"> Send on WhatsApp</label>
+            </div>
+          }
+
+          @if (error()) { <div class="alert alert-danger py-2 small" role="alert">{{ error() }}</div> }
+          <button class="btn btn-accent w-100 py-2" type="submit" [disabled]="busy()">
+            @if (busy()) { <span class="spinner-border spinner-border-sm"></span> }
+            @else { <i class="bi" [class.bi-send]="!passwordMode()" [class.bi-box-arrow-in-right]="passwordMode()"></i> }
+            {{ passwordMode() ? 'Sign in' : 'Send code' }}
+          </button>
+        </form>
+      } @else {
+        <form (ngSubmit)="verify()" novalidate>
+          <button type="button" class="btn btn-link p-0 small mb-2 link-accent" (click)="back()">
+            <i class="bi bi-arrow-left"></i> {{ method() === 'email' ? 'Change email' : 'Change number' }}
+          </button>
+          <h1>Enter the 6-digit code</h1>
+          <p class="text-muted small">We sent it to <strong>{{ sentTo() }}</strong>
+            {{ method() === 'email' ? 'by email' : channel === 'whatsapp' ? 'on WhatsApp' : 'by SMS' }}.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small" for="code">Code</label>
+            <input #codeBox class="form-control otp-single" id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="6" [(ngModel)]="code" required>
+          </div>
+          @if (error()) { <div class="alert alert-danger py-2 small" role="alert">{{ error() }}</div> }
+          <button class="btn btn-accent w-100 py-2" type="submit" [disabled]="busy()">
+            @if (busy()) { <span class="spinner-border spinner-border-sm"></span> Verifying… }
+            @else { <i class="bi bi-check2-circle"></i> Verify &amp; sign in }
+          </button>
+          <p class="small text-center mt-3 mb-0">
+            @if (resendIn() > 0) { Resend code in <b>{{ resendIn() }}</b>s }
+            @else { <button type="button" class="btn btn-link btn-sm p-0 link-accent" (click)="start()">Resend code</button> }
+          </p>
+        </form>
+      }
+    </div>
+  </section>
+</div>

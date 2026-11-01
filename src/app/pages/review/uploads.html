@@ -1,0 +1,124 @@
+<section class="panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="mb-0">Uploads by visitor</h2>
+    <div class="d-flex gap-2 align-items-center">
+      <input class="form-control form-control-sm" type="search" placeholder="Search name, email or mobile" aria-label="Search visitors"
+             [(ngModel)]="search" (ngModelChange)="onSearch()" style="min-width: 240px">
+      <button class="btn btn-light btn-sm" type="button" (click)="load()" [disabled]="loading()"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+  </div>
+  <p class="small text-muted">Every visitor who has shared something: what, and how many. Open a visitor to see and play each upload. Contact details are masked.</p>
+
+  @if (loading()) {
+    <p class="text-muted small py-3"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+  } @else if (error()) {
+    <div class="alert alert-danger small" role="alert">{{ error() }}</div>
+  } @else if (data(); as d) {
+    <p class="small mb-2"><strong>{{ d.total }}</strong> {{ d.total === 1 ? 'visitor has' : 'visitors have' }} shared
+      @if (pages() === 1) { · {{ totals().submissions }} uploads: {{ totals().photos }} photos, {{ totals().videos }} videos, {{ totals().voiceNotes }} voice notes }</p>
+    <div class="table-responsive">
+      <table class="table align-middle uploads-table mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Visitor</th>
+            <th scope="col" class="text-center">Shared</th>
+            <th scope="col" class="text-center" title="Photos"><i class="bi bi-image"></i><span class="visually-hidden">Photos</span></th>
+            <th scope="col" class="text-center" title="Videos"><i class="bi bi-camera-video"></i><span class="visually-hidden">Videos</span></th>
+            <th scope="col" class="text-center" title="Voice notes"><i class="bi bi-mic"></i><span class="visually-hidden">Voice notes</span></th>
+            <th scope="col">Status</th>
+            <th scope="col">Last shared</th>
+            <th scope="col"><span class="visually-hidden">Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of d.items; track u.publicId) {
+            <tr [class.table-active]="open() === u.publicId">
+              <td>
+                <div class="fw-semibold">{{ u.fullName || 'No name' }} @if (u.status !== 'Active') { <span class="badge text-bg-secondary">{{ u.status }}</span> }</div>
+                <div class="small text-muted">{{ u.emailMasked ?? u.mobileMasked ?? '—' }}</div>
+              </td>
+              <td class="text-center fw-semibold">{{ u.submissions }}</td>
+              <td class="text-center">{{ u.photos }}</td>
+              <td class="text-center">{{ u.videos }}</td>
+              <td class="text-center">{{ u.voiceNotes }}</td>
+              <td class="small text-nowrap">
+                @if (u.pending) { <span class="status-chip wait">{{ u.pending }} waiting</span> }
+                @if (u.approved) { <span class="status-chip ok">{{ u.approved }} approved</span> }
+                @if (u.rejected) { <span class="status-chip no">{{ u.rejected }} rejected</span> }
+              </td>
+              <td class="small text-muted text-nowrap">{{ u.lastAtUtc + 'Z' | date: 'd MMM y, HH:mm' }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-light" type="button" (click)="toggle(u)" [attr.aria-expanded]="open() === u.publicId"
+                        [attr.aria-label]="'Show uploads of ' + (u.fullName || 'this visitor')">
+                  <i class="bi" [class.bi-chevron-down]="open() !== u.publicId" [class.bi-chevron-up]="open() === u.publicId"></i>
+                </button>
+              </td>
+            </tr>
+            @if (open() === u.publicId) {
+              <tr class="uploads-detail">
+                <td colspan="8">
+                  @if (detailError()) {
+                    <div class="alert alert-danger small mb-0" role="alert">{{ detailError() }}</div>
+                  } @else if (!detail()) {
+                    <p class="text-muted small mb-0"><span class="spinner-border spinner-border-sm"></span> Loading…</p>
+                  } @else {
+                    <div class="row g-3">
+                      @for (s of detail(); track s.publicId) {
+                        @let photo = file(s, 'main');
+                        @let video = file(s, 'video');
+                        @let voice = file(s, 'voice');
+                        <div class="col-md-6 col-xl-4">
+                          <div class="upload-card-admin">
+                            <div class="thumb">
+                              @if (photo && media()[photo.publicId]; as src) { <img [src]="src" [alt]="title(s)"> }
+                              @else if (video && media()[video.publicId]; as src) { <video [src]="src" controls playsinline preload="metadata"></video> }
+                              @else if (video) { <button type="button" class="btn btn-light btn-sm" (click)="loadMedia(video)"><i class="bi bi-play-circle"></i> Load video</button> }
+                              @else { <span class="spinner-border spinner-border-sm text-secondary"></span> }
+                            </div>
+                            <div class="p-2">
+                              <div class="d-flex align-items-start gap-2">
+                                <div class="fw-semibold small me-auto">{{ title(s) }}</div>
+                                <span class="status-chip" [class.ok]="s.status === 'Approved'" [class.no]="s.status === 'Rejected'" [class.wait]="s.status === 'Pending'">{{ s.status === 'Pending' ? 'Waiting' : s.status }}</span>
+                              </div>
+                              <div class="small text-muted">{{ s.reference }} · {{ kindName[s.kind] }} · {{ s.createdAtUtc + 'Z' | date: 'd MMM y' }}</div>
+                              <div class="small mt-1">
+                                @if (photo) { <span class="pill"><i class="bi bi-image"></i> Photo</span> }
+                                @if (file(s, 'source')) { <span class="pill"><i class="bi bi-image-alt"></i> Original</span> }
+                                @if (file(s, 'then')) { <span class="pill"><i class="bi bi-clock-history"></i> Old photo</span> }
+                                @if (video) { <span class="pill"><i class="bi bi-camera-video"></i> Video</span> }
+                                @if (voice) { <span class="pill"><i class="bi bi-mic"></i> Voice note</span> }
+                              </div>
+                              @if (photo && video) {
+                                @if (media()[video.publicId]; as src) { <video class="mt-2 w-100" [src]="src" controls playsinline preload="metadata"></video> }
+                                @else { <button type="button" class="btn btn-link btn-sm p-0 mt-1" (click)="loadMedia(video)">Play the video</button> }
+                              }
+                              @if (voice) {
+                                @if (media()[voice.publicId]; as src) { <audio class="mt-2 w-100" [src]="src" controls preload="metadata"></audio> }
+                                @else { <button type="button" class="btn btn-link btn-sm p-0 mt-1" (click)="loadMedia(voice)"><i class="bi bi-play-circle"></i> Play the voice note</button> }
+                              }
+                              @if (s.message) { <p class="small fst-italic mt-1 mb-0">“{{ s.message }}”</p> }
+                              @if (s.reviewNote) { <p class="small text-danger mt-1 mb-0">Reason: {{ s.reviewNote }}</p> }
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr><td colspan="8" class="text-muted small">{{ search ? 'No visitor matches that search.' : 'Nobody has shared anything yet.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pages() > 1) {
+      <nav class="d-flex justify-content-center align-items-center gap-2 mt-3" aria-label="Pages">
+        <button class="btn btn-sm btn-light" type="button" (click)="goPage(page() - 1)" [disabled]="page() === 1"><i class="bi bi-chevron-left"></i> Previous</button>
+        <span class="small text-muted">Page {{ page() }} of {{ pages() }}</span>
+        <button class="btn btn-sm btn-light" type="button" (click)="goPage(page() + 1)" [disabled]="page() >= pages()">Next <i class="bi bi-chevron-right"></i></button>
+      </nav>
+    }
+  }
+</section>
