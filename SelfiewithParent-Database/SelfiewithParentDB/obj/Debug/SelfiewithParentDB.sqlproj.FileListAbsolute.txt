@@ -1,0 +1,10 @@
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\bin\Debug\SelfiewithParentDB.dacpac
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\bin\Debug\SelfiewithParentDB.dll
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\bin\Debug\SelfiewithParentDB.pdb
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\SelfiewithParentDB.sqlproj.AssemblyReference.cache
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\SelfiewithParentDB.dll
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\SelfiewithParentDB.pdb
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\Model.xml
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\refactor.xml
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\postdeploy.sql
+C:\Project\SelfiewithParent-Database\SelfiewithParentDB\obj\Debug\predeploy.sql

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>SelfiewithParentDB</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{741A47FF-057C-49EC-A9C9-7D30867A9E5F}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>SelfiewithParentDB</RootNamespace>
+    <AssemblyName>SelfiewithParentDB</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="Security" />
+    <Folder Include="auth" />
+    <Folder Include="auth\Tables" />
+    <Folder Include="auth\Triggers" />
+    <Folder Include="auth\StoredProcedures" />
+    <Folder Include="auth\Functions" />
+    <Folder Include="site\StoredProcedures" />
+    <Folder Include="selfie" />
+    <Folder Include="selfie\Tables" />
+    <Folder Include="selfie\StoredProcedures" />
+    <Folder Include="selfie\Triggers" />
+    <Folder Include="selfie\Functions" />
+    <Folder Include="audit" />
+    <Folder Include="audit\Tables" />
+    <Folder Include="security" />
+    <Folder Include="security\Functions" />
+    <Folder Include="Scripts" />
+    <Folder Include="site" />
+    <Folder Include="site\Tables" />
+    <Folder Include="site\Triggers" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
+    <None Include="Scripts\Seed.Menus.sql" />
+    <None Include="Scripts\Upgrade.AboutMenu.sql" />
+    <None Include="Scripts\Upgrade.AdminMenuGroups.sql" />
+    <None Include="Scripts\Seed.Pages.sql" />
+    <None Include="Scripts\Seed.SiteImages.sql" />
+    <None Include="Scripts\Upgrade.SiteImages.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Security\auth.sql" />
+    <Build Include="Security\audit.sql" />
+    <Build Include="Security\security.sql" />
+    <Build Include="Security\site.sql" />
+    <Build Include="Security\Roles.sql" />
+    <Build Include="Security\Permissions.sql" />
+    <Build Include="Security\swp_staff_admin.sql" />
+    <Build Include="auth\Tables\User.sql" />
+    <Build Include="auth\Triggers\trg_User_Audit.sql" />
+    <Build Include="auth\Tables\Role.sql" />
+    <Build Include="auth\Tables\UserRole.sql" />
+    <Build Include="auth\Triggers\trg_UserRole_Audit.sql" />
+    <Build Include="auth\Triggers\trg_User_AssignVisitorRole.sql" />
+    <Build Include="auth\Tables\UserPassword.sql" />
+    <Build Include="auth\Triggers\trg_UserPassword_Audit.sql" />
+    <Build Include="auth\StoredProcedures\usp_CreateStaffUser.sql" />
+    <Build Include="auth\StoredProcedures\usp_DeleteStaffUser.sql" />
+    <Build Include="auth\StoredProcedures\usp_UpdateStaffUser.sql" />
+    <Build Include="auth\StoredProcedures\usp_SetStaffActive.sql" />
+    <Build Include="auth\StoredProcedures\usp_SetVisitorActive.sql" />
+    <Build Include="auth\Tables\AccountStatusChange.sql" />
+    <Build Include="auth\Functions\fn_ActiveRoles.sql" />
+    <Build Include="auth\Tables\ProfilePhoto.sql" />
+    <Build Include="auth\Triggers\trg_ProfilePhoto_Audit.sql" />
+    <Build Include="auth\StoredProcedures\usp_ProfilePhoto.sql" />
+    <Build Include="Security\selfie.sql" />
+    <Build Include="selfie\Tables\Submission.sql" />
+    <Build Include="selfie\Tables\SubmissionFile.sql" />
+    <Build Include="selfie\Tables\Candle.sql" />
+    <Build Include="selfie\Functions\fn_ApprovedMemory.sql" />
+    <Build Include="selfie\Triggers\trg_Selfie_Audit.sql" />
+    <Build Include="selfie\StoredProcedures\SubmissionProcedures.sql" />
+    <Build Include="site\Tables\Page.sql" />
+    <Build Include="site\Tables\PageContent.sql" />
+    <Build Include="site\Tables\Media.sql" />
+    <Build Include="site\Tables\Setting.sql" />
+    <Build Include="site\Tables\ContactMessage.sql" />
+    <Build Include="site\Tables\HomeContent.sql" />
+    <Build Include="site\StoredProcedures\HomeContentProcedures.sql" />
+    <Build Include="site\StoredProcedures\ContactProcedures.sql" />
+    <Build Include="selfie\Tables\SubmissionLike.sql" />
+    <Build Include="selfie\Tables\FamilyDate.sql" />
+    <Build Include="selfie\Tables\ReminderSetting.sql" />
+    <Build Include="selfie\Tables\ReminderLog.sql" />
+    <Build Include="selfie\Functions\fn_ApprovedSubmission.sql" />
+    <Build Include="selfie\StoredProcedures\EngagementProcedures.sql" />
+    <Build Include="selfie\Tables\Contest.sql" />
+    <Build Include="selfie\StoredProcedures\ContestProcedures.sql" />
+    <Build Include="selfie\Tables\ParentStory.sql" />
+    <Build Include="selfie\StoredProcedures\ParentStoryProcedures.sql" />
+    <Build Include="selfie\Tables\Gratitude.sql" />
+    <Build Include="selfie\StoredProcedures\GratitudeProcedures.sql" />
+    <Build Include="selfie\Tables\FamilyAlbum.sql" />
+    <Build Include="selfie\StoredProcedures\AlbumProcedures.sql" />
+    <Build Include="Security\give.sql" />
+    <Build Include="give\Tables\Giving.sql" />
+    <Build Include="give\StoredProcedures\GivingProcedures.sql" />
+    <Build Include="site\StoredProcedures\SettingProcedures.sql" />
+    <Build Include="site\Triggers\trg_Content_Audit.sql" />
+    <Build Include="site\StoredProcedures\PageProcedures.sql" />
+    <Build Include="site\StoredProcedures\MenuProcedures.sql" />
+    <Build Include="site\StoredProcedures\MediaProcedures.sql" />
+    <Build Include="audit\Tables\ChangeLog.sql" />
+    <Build Include="security\Functions\fn_UserRowAccess.sql" />
+    <Build Include="security\UserAccessPolicy.sql" />
+    <Build Include="site\Tables\Menu.sql" />
+    <Build Include="site\Tables\MenuItem.sql" />
+    <Build Include="site\Tables\MenuItemLabel.sql" />
+    <Build Include="site\Triggers\trg_MenuItem_Audit.sql" />
+  </ItemGroup>
+</Project>
