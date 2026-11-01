@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Wall | Selfie with Parent</title>
+  <meta name="description" content="A quiet place to remember parents and grandparents who are no longer with us.">
+  <!-- Share previews (WhatsApp, Facebook, X) + icons -->
+  <link rel="canonical" href="https://www.selfiewithparent.org/memories.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Selfie with Parent">
+  <meta property="og:title" content="Memory Wall | Selfie with Parent">
+  <meta property="og:description" content="A quiet place to remember parents and grandparents who are no longer with us.">
+  <meta property="og:url" content="https://www.selfiewithparent.org/memories.html">
+  <meta property="og:image" content="https://www.selfiewithparent.org/img/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Selfie with Parent — They held your hand first. Now hold the camera.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a3d3e">
+  <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="img/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/i18n.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/lang.js"></script>
+  <script src="js/i18n.js"></script>
+  <link rel="stylesheet" href="css/features.css">
+</head>
+<body>
+
+  <div id="siteHeader"></div>
+  <script src="js/auth.js"></script>
+  <script src="js/nav.js"></script>
+
+  <header class="page-hero memorial">
+    <div class="container">
+      <span class="eyebrow">In loving memory</span>
+      <h1>Memory Wall</h1>
+      <p class="lead">A quiet place to remember the parents and grandparents who shaped us. Light a candle for someone, or add a tribute of your own.</p>
+    </div>
+  </header>
+
+  <main class="pb-5">
+    <div class="container">
+      <div class="card-soft lift mb-5 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <div class="small text-muted">Candles lit on this wall</div>
+          <div class="pledge-count text-dark" id="candleTotal">0</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <span class="design-flag"><i class="bi bi-brush"></i> Design preview</span>
+          <a class="btn btn-accent" href="upload.html?kind=memory"><i class="bi bi-flower1"></i> Add a tribute</a>
+        </div>
+      </div>
+      <div class="row g-4" id="memoryGrid"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+        <span>&copy; <span id="year"></span> Selfie with Parent. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <a href="#">Terms &amp; Conditions</a></span>
+      </div>
+    </div>
+  </footer>
+  <a href="#" class="back-top" aria-label="Back to top"><i class="bi bi-arrow-up"></i></a>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/features-data.js"></script>
+  <script src="js/features.js"></script>
+  <script>
+    // Memory wall — candles are remembered in this browser for the preview
+    (function () {
+      var list = window.MEMORIES || [];
+      var lit = Features.store("swp-candles", {});
+      var grid = document.getElementById("memoryGrid");
+      var loc = window.I18N ? I18N.locale : "en-IN";
+
+      function total() {
+        var n = list.reduce(function (sum, m, i) { return sum + m.candles + (lit[i] ? 1 : 0); }, 0);
+        document.getElementById("candleTotal").textContent = n.toLocaleString(loc);
+      }
+
+      list.forEach(function (m, i) {
+        var col = document.createElement("div");
+        col.className = "col-md-6 col-lg-4";
+        col.innerHTML =
+          '<article class="memory-card"><img alt="" loading="lazy"><div class="body">' +
+          "<h3></h3><span class=\"years\"></span><blockquote></blockquote><span class=\"by\"></span>" +
+          '<button type="button" class="candle-btn"><span class="flame" aria-hidden="true"></span> <span class="lbl"></span></button>' +
+          "</div></article>";
+        col.querySelector("img").src = m.photo;
+        col.querySelector("img").alt = m.name;
+        col.querySelector("h3").textContent = m.name;
+        col.querySelector(".years").textContent = Features.t(m.relation) + " · " + m.years;
+        col.querySelector("blockquote").textContent = "“" + m.text + "”";
+        col.querySelector(".by").textContent = "— " + m.by;
+        var btn = col.querySelector(".candle-btn");
+        function paint() {
+          var on = !!lit[i];
+          btn.classList.toggle("lit", on);
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+          btn.querySelector(".lbl").textContent = (on ? Features.t("Candle lit") : Features.t("Light a candle")) + " · " + (m.candles + (on ? 1 : 0)).toLocaleString(loc);
+        }
+        btn.addEventListener("click", function () {
+          if (lit[i]) delete lit[i]; else lit[i] = 1;
+          Features.save("swp-candles", lit);
+          paint(); total();
+        });
+        paint();
+        grid.appendChild(col);
+      });
+      total();
+    })();
+  </script>
+</body>
+</html>

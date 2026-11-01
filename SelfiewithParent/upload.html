@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Share Your Selfie | Selfie with Parent</title>
+  <meta name="description" content="Share a selfie with your parent or grandparent and add it to the Selfie with Parent gallery.">
+  <!-- Share previews (WhatsApp, Facebook, X) + icons -->
+  <link rel="canonical" href="https://www.selfiewithparent.org/upload.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Selfie with Parent">
+  <meta property="og:title" content="Share Your Selfie | Selfie with Parent">
+  <meta property="og:description" content="Share a selfie with your parent or grandparent and add it to the Selfie with Parent gallery.">
+  <meta property="og:url" content="https://www.selfiewithparent.org/upload.html">
+  <meta property="og:image" content="https://www.selfiewithparent.org/img/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Selfie with Parent — They held your hand first. Now hold the camera.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a3d3e">
+  <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="img/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/i18n.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/lang.js"></script>
+  <script src="js/i18n.js"></script>
+  <link rel="stylesheet" href="css/upload.css">
+  <link rel="stylesheet" href="css/features.css">
+</head>
+<body>
+
+  <div id="siteHeader"></div>
+  <script src="js/auth.js"></script>
+  <script src="js/nav.js"></script>
+
+  <header class="upload-hero">
+    <div class="container text-center text-white">
+      <span class="eyebrow">Join the gallery</span>
+      <h1>Share your <em>moment</em></h1>
+      <p class="lead mx-auto">Three quick steps. Our team reviews every photo before it appears in the gallery.</p>
+    </div>
+  </header>
+
+  <main class="upload-main">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-9">
+          <div class="upload-card">
+
+            <!-- Stepper -->
+            <ol class="stepper" id="stepper" aria-label="Progress">
+              <li class="active"><span>1</span>About you</li>
+              <li><span>2</span>Your photo</li>
+              <li><span>3</span>Review</li>
+            </ol>
+
+            <form id="uploadForm" novalidate>
+
+              <!-- Step 1 -->
+              <fieldset class="step active" data-step="1">
+                <legend class="visually-hidden">About you</legend>
+
+                <p class="step-label">What kind of photo is it?</p>
+                <div class="type-cards" role="radiogroup" aria-label="Photo type">
+                  <label class="type-card">
+                    <input type="radio" name="kind" value="real" checked>
+                    <i class="bi bi-camera"></i><strong>A real selfie</strong><small>Taken together with your camera</small>
+                  </label>
+                  <label class="type-card">
+                    <input type="radio" name="kind" value="ai">
+                    <i class="bi bi-stars"></i><strong>AI-made</strong><small>Created from photos with an AI tool</small>
+                  </label>
+                  <label class="type-card">
+                    <input type="radio" name="kind" value="memory">
+                    <i class="bi bi-flower1"></i><strong>In loving memory</strong><small>Honouring a parent who has passed</small>
+                  </label>
+                  <label class="type-card">
+                    <input type="radio" name="kind" value="family">
+                    <i class="bi bi-people-fill"></i><strong>Family</strong><small>The whole family together — photo and video</small>
+                  </label>
+                </div>
+
+                <div class="kind-note" id="aiNote" hidden>
+                  <i class="bi bi-lightbulb"></i>
+                  <div>
+                    <strong>Tip for AI photos:</strong> start from a real photo of each of you, ask for a natural, warm family selfie, and avoid changing faces beyond recognition. We label AI photos in the gallery.
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="copyPrompt">Copy a sample prompt</button>
+                  </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                  <div class="col-md-6">
+                    <label class="form-label" for="yourName">Your name <b>*</b></label>
+                    <input class="form-control" id="yourName" name="yourName" required maxlength="60" autocomplete="name">
+                    <div class="invalid-feedback">Please tell us your name.</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="parentName" id="parentLabel">Parent / grandparent's name <b>*</b></label>
+                    <input class="form-control" id="parentName" name="parentName" required maxlength="60">
+                    <div class="invalid-feedback">Please add their name.</div>
+                  </div>
+                  <div class="col-md-6" id="relationWrap">
+                    <label class="form-label" for="relation">They are your… <b>*</b></label>
+                    <select class="form-select" id="relation" name="relation" required>
+                      <option value="">Choose one</option>
+                      <option>Mother</option><option>Father</option><option>Both parents</option>
+                      <option>Grandmother</option><option>Grandfather</option><option>Grandparents</option>
+                      <option>Step-parent</option><option>Guardian</option>
+                    </select>
+                    <div class="invalid-feedback">Please choose one.</div>
+                  </div>
+                  <div class="col-md-6" id="familySizeWrap" hidden>
+                    <label class="form-label" for="familySize">How many people are in it? <b>*</b></label>
+                    <select class="form-select" id="familySize" name="familySize">
+                      <option value="">Choose one</option>
+                      <option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                      <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                      <option value="10">10</option><option value="11-15">11–15</option><option value="16+">16+</option>
+                    </select>
+                    <div class="invalid-feedback">Please choose one.</div>
+                  </div>
+                  <div class="col-md-6" id="generationsWrap" hidden>
+                    <label class="form-label" for="generations">Generations in the picture</label>
+                    <select class="form-select" id="generations" name="generations">
+                      <option value="">Prefer not to say</option>
+                      <option value="2">2 generations</option>
+                      <option value="3">3 generations</option>
+                      <option value="4+">4 or more generations</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6" id="memoryYearWrap" hidden>
+                    <label class="form-label" for="memoryYear">Year they passed</label>
+                    <select class="form-select" id="memoryYear" name="memoryYear"></select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="country">Country <b>*</b></label>
+                    <select class="form-select" id="country" name="country" required></select>
+                    <div class="invalid-feedback">Please choose your country.</div>
+                  </div>
+                  <div class="col-md-6" id="stateWrap">
+                    <label class="form-label" for="state">State / UT <b>*</b></label>
+                    <select class="form-select" id="state" name="state" required></select>
+                    <div class="invalid-feedback">Please choose your state.</div>
+                  </div>
+                  <div class="col-md-6" id="regionWrap" hidden>
+                    <label class="form-label" for="region">State / region</label>
+                    <input class="form-control" id="region" name="region" maxlength="60">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="city">City / village</label>
+                    <input class="form-control" id="city" name="city" maxlength="60" autocomplete="address-level2">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="mobile">Mobile <b>*</b></label>
+                    <div class="input-group">
+                      <span class="input-group-text" id="dialCode">+91</span>
+                      <input class="form-control" id="mobile" name="mobile" type="tel" inputmode="numeric" required autocomplete="tel-national">
+                      <div class="invalid-feedback" id="mobileError">Enter a valid 10-digit mobile number.</div>
+                    </div>
+                    <div class="form-text">Only used if we need to contact you. Never shown publicly.</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-control" id="email" name="email" type="email" maxlength="120" autocomplete="email">
+                    <div class="invalid-feedback">That email doesn't look right.</div>
+                  </div>
+                </div>
+
+                <!-- Age + parental consent (needed for under-18s under India's DPDP Act) -->
+                <div class="age-check mt-4">
+                  <p class="step-label mb-2" id="ageLabel">Are you 18 or older? <b>*</b></p>
+                  <div class="d-flex flex-wrap gap-3" role="radiogroup" aria-labelledby="ageLabel">
+                    <label class="form-check"><input class="form-check-input" type="radio" name="adult" value="yes"> <span class="form-check-label">Yes, I am 18 or older</span></label>
+                    <label class="form-check"><input class="form-check-input" type="radio" name="adult" value="no"> <span class="form-check-label">No, I am under 18</span></label>
+                  </div>
+                  <div class="invalid-msg" id="ageError" hidden>Please tell us whether you are 18 or older.</div>
+
+                  <div class="guardian-box mt-3" id="guardianBox" hidden>
+                    <p class="mb-2"><i class="bi bi-shield-check"></i> <strong>A parent or guardian needs to approve this.</strong> We'll send them a one-time code to confirm before anything is published.</p>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label" for="guardianName">Parent / guardian's name <b>*</b></label>
+                        <input class="form-control" id="guardianName" name="guardianName" maxlength="60" required>
+                        <div class="invalid-feedback">Please add your parent or guardian's name.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="guardianMobile">Parent / guardian's mobile <b>*</b></label>
+                        <input class="form-control" id="guardianMobile" name="guardianMobile" type="tel" inputmode="numeric" required>
+                        <div class="invalid-feedback">Enter a valid mobile number.</div>
+                      </div>
+                      <div class="col-12">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="guardianConsent" required>
+                          <label class="form-check-label" for="guardianConsent">My parent or guardian is with me and agrees to this submission. <b>*</b></label>
+                          <div class="invalid-feedback">Your parent or guardian needs to agree.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="step-actions">
+                  <span></span>
+                  <button type="button" class="btn btn-accent" data-next>Next: add photo <i class="bi bi-arrow-right"></i></button>
+                </div>
+              </fieldset>
+
+              <!-- Step 2 -->
+              <fieldset class="step" data-step="2">
+                <legend class="visually-hidden">Your photo</legend>
+                <div class="row g-4">
+                  <div class="col-md-7">
+                    <div class="kind-note family-note" id="familyNote" hidden>
+                      <i class="bi bi-people-fill"></i>
+                      <div>Add a family photo, a family video, or both. At least one is needed.</div>
+                    </div>
+                    <div class="media-toggle" id="mediaToggle" role="radiogroup" aria-label="Share a photo or a video">
+                      <label><input type="radio" name="media" value="photo" checked><span><i class="bi bi-image"></i> Photo</span></label>
+                      <label><input type="radio" name="media" value="video"><span><i class="bi bi-camera-video"></i> Video</span></label>
+                    </div>
+
+                    <!-- Video -->
+                    <div id="videoBlock" hidden>
+                      <p class="step-label" id="videoLabel">Your video message <b>*</b></p>
+                      <div class="dropzone" id="dzVideo" tabindex="0" role="button" aria-labelledby="videoLabel">
+                        <input type="file" accept="video/mp4,video/webm,video/quicktime" id="videoFile" hidden>
+                        <div class="dz-empty">
+                          <i class="bi bi-film"></i>
+                          <strong>Drag a video here</strong>
+                          <span>or click to choose · MP4, WebM or MOV · up to 60 seconds · 50 MB</span>
+                        </div>
+                        <video class="dz-video" controls playsinline preload="metadata" hidden></video>
+                        <button type="button" class="dz-remove" aria-label="Remove video" hidden><i class="bi bi-x-lg"></i></button>
+                      </div>
+                      <div class="video-meta" id="videoMeta" hidden></div>
+                      <div class="invalid-msg" id="videoError" hidden></div>
+
+                      <div class="record-row">
+                        <span class="or-line">or</span>
+                        <button type="button" class="btn btn-outline-accent" id="recordOpen"><i class="bi bi-record-circle"></i> Record with your camera</button>
+                      </div>
+
+                      <div class="recorder" id="recorder" hidden>
+                        <video id="camPreview" autoplay muted playsinline></video>
+                        <div class="rec-badge" id="recBadge" hidden><span class="dot"></span> <span id="recTime">0:00</span> / 1:00</div>
+                        <div class="rec-controls">
+                          <button type="button" class="btn btn-light" id="camSwitch" aria-label="Switch camera"><i class="bi bi-arrow-repeat"></i></button>
+                          <button type="button" class="rec-btn" id="recToggle" aria-label="Start recording"><span></span></button>
+                          <button type="button" class="btn btn-light" id="recClose" aria-label="Close camera"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Photo -->
+                    <div id="photoBlock">
+                    <p class="step-label" id="mainPhotoLabel">Your selfie <b>*</b></p>
+                    <div class="dropzone" id="dzMain" tabindex="0" role="button" aria-labelledby="mainPhotoLabel">
+                      <input type="file" accept="image/jpeg,image/png,image/webp" id="photoMain" hidden>
+                      <div class="dz-empty">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <strong>Drag a photo here</strong>
+                        <span>or click to choose · JPG, PNG or WebP · up to 10 MB</span>
+                      </div>
+                      <img class="dz-preview" alt="Selected photo preview" hidden>
+                      <button type="button" class="dz-remove" aria-label="Remove photo" hidden><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="invalid-msg" id="photoError" hidden></div>
+                    <button type="button" class="btn btn-sm btn-outline-accent alt-media" id="useVideo"><i class="bi bi-camera-video"></i> Use a video instead</button>
+
+                    <div id="sourceWrap" hidden>
+                      <p class="step-label mt-4">Original photo used for the AI image <span class="text-muted fw-normal">(optional)</span></p>
+                      <div class="dropzone small-dz" id="dzSource" tabindex="0" role="button">
+                        <input type="file" accept="image/jpeg,image/png,image/webp" id="photoSource" hidden>
+                        <div class="dz-empty"><i class="bi bi-image"></i><span>Helps us verify the AI photo</span></div>
+                        <img class="dz-preview" alt="Original photo preview" hidden>
+                        <button type="button" class="dz-remove" aria-label="Remove photo" hidden><i class="bi bi-x-lg"></i></button>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                  <div class="col-md-5">
+                    <label class="step-label" for="message">Your message</label>
+                    <textarea class="form-control" id="message" name="message" rows="6" maxlength="300" placeholder="One thing they taught you, a memory, or simply why you love them."></textarea>
+                    <div class="char-count"><span id="msgCount">0</span>/300</div>
+                    <div class="photo-tips">
+                      <p><i class="bi bi-check2-circle"></i> Faces clearly visible</p>
+                      <p><i class="bi bi-check2-circle"></i> Good light, no heavy filters</p>
+                      <p><i class="bi bi-check2-circle"></i> Everyone in it is happy to be shared</p>
+                    </div>
+
+                    <div class="voice-rec" id="voiceRec">
+                      <p class="step-label mb-1"><i class="bi bi-mic"></i> Add a voice note <span class="text-muted fw-normal">(optional)</span></p>
+                      <p class="small text-muted mb-2">Let your parent or grandparent say a few words — a blessing, a memory, a message. Up to 60 seconds.</p>
+                      <div class="row-line">
+                        <button type="button" class="btn btn-sm btn-outline-accent" id="voiceStart"><i class="bi bi-mic-fill"></i> Record voice note</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="voiceStop" hidden><i class="bi bi-stop-fill"></i> Stop</button>
+                        <span class="rec-dot" id="voiceDot" hidden></span>
+                        <span class="small fw-semibold" id="voiceTimer" hidden>0:00</span>
+                        <button type="button" class="btn btn-sm btn-link text-danger" id="voiceRemove" hidden>Remove</button>
+                      </div>
+                      <audio id="voicePlayback" controls hidden></audio>
+                      <div class="invalid-msg" id="voiceError" hidden></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="step-actions">
+                  <button type="button" class="btn btn-light" data-back><i class="bi bi-arrow-left"></i> Back</button>
+                  <button type="button" class="btn btn-accent" data-next>Next: review <i class="bi bi-arrow-right"></i></button>
+                </div>
+              </fieldset>
+
+              <!-- Step 3 -->
+              <fieldset class="step" data-step="3">
+                <legend class="visually-hidden">Review and submit</legend>
+                <div class="row g-4 align-items-start">
+                  <div class="col-md-5">
+                    <div class="review-photo"><img id="reviewImg" alt="Your photo"><video id="reviewVideo" controls playsinline preload="metadata" hidden></video><span class="review-tag" id="reviewTag"></span></div>
+                  </div>
+                  <div class="col-md-7">
+                    <dl class="review-list" id="reviewList"></dl>
+                    <button type="button" class="btn btn-link p-0" data-goto="1"><i class="bi bi-pencil"></i> Edit details</button>
+                  </div>
+                </div>
+
+                <div class="privacy-notice">
+                  <p class="fw-semibold mb-2"><i class="bi bi-lock"></i> How we use your information</p>
+                  <ul>
+                    <li><strong>What we collect:</strong> your name, location, mobile, email, and the photo, video or voice note you share.</li>
+                    <li><strong>Why:</strong> to review your submission, show it in the gallery, and contact you about it. Your mobile and email are never shown publicly.</li>
+                    <li><strong>Your choice:</strong> you can ask us to remove your submission or delete your details at any time.</li>
+                  </ul>
+                  <a href="privacy.html" target="_blank" class="small">Read the full Privacy Policy</a>
+                </div>
+
+                <div class="consents">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="cPermission" required>
+                    <label class="form-check-label" for="cPermission">Everyone in this photo (or their guardian) agrees to it being shown publicly. <b>*</b></label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="cOwn" required>
+                    <label class="form-check-label" for="cOwn">I took this photo or have the right to share it. <b>*</b></label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="cTerms" required>
+                    <label class="form-check-label" for="cTerms">I accept the <a href="#" target="_blank">Terms</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. <b>*</b></label>
+                  </div>
+                  <div class="invalid-msg" id="consentError" hidden>Please tick all three boxes to continue.</div>
+                </div>
+
+                <div class="step-actions">
+                  <button type="button" class="btn btn-light" data-back><i class="bi bi-arrow-left"></i> Back</button>
+                  <button type="submit" class="btn btn-accent" id="submitBtn"><i class="bi bi-send"></i> Submit selfie</button>
+                </div>
+              </fieldset>
+            </form>
+
+            <!-- Success -->
+            <div class="success" id="success" hidden>
+              <div class="success-icon"><i class="bi bi-heart-fill"></i></div>
+              <h2>Thank you, <span id="successName"></span>!</h2>
+              <p>Your selfie is in our review queue. It usually appears in the gallery within 48 hours.</p>
+              <p class="ref">Reference: <strong id="refId"></strong></p>
+              <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                <a href="selfies.html" class="btn btn-accent"><i class="bi bi-palette"></i> Make a frame</a>
+                <button type="button" class="btn btn-outline-accent" id="againBtn"><i class="bi bi-plus-lg"></i> Share another</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-wrap"><div id="copyToast" class="toast" role="status" aria-live="polite"><div class="toast-body">Prompt copied</div></div></div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+        <span>&copy; <span id="year"></span> Selfie with Parent. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <a href="#">Terms &amp; Conditions</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/upload.js"></script>
+</body>
+</html>

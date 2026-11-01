@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>My account | Selfie with Parent</title>
+  <meta name="description" content="Your profile, uploads, family and privacy settings on Selfie with Parent.">
+  <meta name="theme-color" content="#0a3d3e">
+  <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/i18n.css">
+  <script src="js/lang.js"></script>
+  <script src="js/i18n.js"></script>
+  <link rel="stylesheet" href="css/features.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/auth.js"></script>
+  <script>
+    // Signed-out visitors go to sign-in first
+    if (!Auth.isSignedIn()) location.replace(Auth.loginUrl("account.html"));
+  </script>
+</head>
+<body>
+
+  <div id="siteHeader"></div>
+  <script src="js/nav.js"></script>
+
+  <main id="main" class="account-page">
+    <div class="container">
+      <div class="account-head">
+        <div class="avatar-lg" id="avatar" aria-hidden="true"></div>
+        <div>
+          <h1 class="h3 mb-1" id="helloName">My account</h1>
+          <div class="small text-muted" id="signedInAs"></div>
+        </div>
+        <span class="design-flag ms-auto"><i class="bi bi-brush"></i> Design preview — saved in this browser only</span>
+      </div>
+
+      <div class="welcome-box" id="welcomeBox" hidden>
+        <i class="bi bi-stars"></i>
+        <div><strong>Welcome! Just one step left.</strong> Tell us a little about you — you'll only do this once, and every upload after this fills in by itself.</div>
+      </div>
+
+      <div class="account-grid">
+        <nav class="account-nav" aria-label="Account sections">
+          <a href="#profile" class="active"><i class="bi bi-person"></i> Profile</a>
+          <a href="#family"><i class="bi bi-people"></i> My family</a>
+          <a href="#uploads"><i class="bi bi-images"></i> My uploads</a>
+          <a href="#reminders"><i class="bi bi-bell"></i> Reminders</a>
+          <a href="#privacy"><i class="bi bi-shield-lock"></i> Privacy &amp; data</a>
+        </nav>
+
+        <div class="account-sections">
+          <!-- Profile -->
+          <section class="card-soft" id="profile">
+            <h2 class="acc-title">Profile</h2>
+            <form id="profileForm" novalidate>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="pName">Your name <b class="req">*</b></label>
+                  <input class="form-control" id="pName" maxlength="60" required autocomplete="name">
+                  <div class="invalid-feedback">Please tell us your name.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="pEmail">Email <span class="text-muted small">(optional)</span></label>
+                  <input class="form-control" id="pEmail" type="email" maxlength="120" autocomplete="email">
+                  <div class="invalid-feedback">That email doesn't look right.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="pCountry">Country <b class="req">*</b></label>
+                  <select class="form-select" id="pCountry" required data-i18n-skip></select>
+                  <div class="invalid-feedback">Please choose your country.</div>
+                </div>
+                <div class="col-md-6" id="pStateWrap">
+                  <label class="form-label" for="pState">State / UT</label>
+                  <select class="form-select" id="pState" data-i18n-skip></select>
+                </div>
+                <div class="col-md-6" id="pRegionWrap" hidden>
+                  <label class="form-label" for="pRegion">State / region</label>
+                  <input class="form-control" id="pRegion" maxlength="60">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="pCity">City / village</label>
+                  <input class="form-control" id="pCity" maxlength="60" autocomplete="address-level2">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="pLang">Preferred language</label>
+                  <select class="form-select" id="pLang" data-i18n-skip></select>
+                </div>
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="pAdult" required>
+                    <label class="form-check-label" for="pAdult">I confirm I am 18 or older. <b class="req">*</b></label>
+                    <div class="invalid-feedback">Accounts are for adults. A parent or guardian can share for children.</div>
+                  </div>
+                  <div class="form-check mt-1">
+                    <input class="form-check-input" type="checkbox" id="pUpdates">
+                    <label class="form-check-label" for="pUpdates">Send me campaign updates on WhatsApp (you can stop any time).</label>
+                  </div>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                  <button class="btn btn-accent" type="submit" id="saveProfile"><i class="bi bi-check2"></i> Save profile</button>
+                  <span class="form-note" id="profileNote" role="status"></span>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <!-- Family -->
+          <section class="card-soft" id="family">
+            <h2 class="acc-title">My family</h2>
+            <p class="text-muted small">Save your parents and grandparents once. You can pick them when you upload, and use them in your family tree.</p>
+            <ul class="family-list" id="familyList"></ul>
+            <form class="row g-2 align-items-end" id="familyForm" novalidate>
+              <div class="col-sm-5"><label class="form-label small" for="fName">Name</label><input class="form-control" id="fName" maxlength="60" required></div>
+              <div class="col-sm-4">
+                <label class="form-label small" for="fRel">Relationship</label>
+                <select class="form-select" id="fRel" required>
+                  <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option><option>Step-parent</option><option>Guardian</option>
+                </select>
+              </div>
+              <div class="col-sm-3"><button class="btn btn-outline-accent w-100" type="submit"><i class="bi bi-plus-lg"></i> Add</button></div>
+            </form>
+          </section>
+
+          <!-- Uploads -->
+          <section class="card-soft" id="uploads">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <h2 class="acc-title mb-0">My uploads</h2>
+              <a class="btn btn-accent btn-sm" href="upload.html"><i class="bi bi-upload"></i> Share a new selfie</a>
+            </div>
+            <div id="uploadList"></div>
+          </section>
+
+          <!-- Reminders -->
+          <section class="card-soft" id="reminders">
+            <h2 class="acc-title">Reminders</h2>
+            <ul class="reminder-list" id="accReminders"></ul>
+            <a class="btn btn-outline-accent btn-sm mt-2" href="index.html#connect"><i class="bi bi-bell"></i> Add a reminder</a>
+          </section>
+
+          <!-- Privacy -->
+          <section class="card-soft" id="privacy">
+            <h2 class="acc-title">Privacy &amp; data</h2>
+            <p class="text-muted small">You're in control. See what we hold about you, download it, or delete your account. <a href="privacy.html">Privacy Policy</a></p>
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-outline-accent" type="button" id="downloadData"><i class="bi bi-download"></i> Download my data</button>
+              <button class="btn btn-light" type="button" id="signOut"><i class="bi bi-box-arrow-right"></i> Sign out</button>
+              <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="bi bi-trash"></i> Delete my account</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content studio">
+        <div class="modal-header"><h5 class="modal-title" id="deleteTitle">Delete your account?</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <p>This removes your profile, your family list, your reminders and your uploads from the gallery. It can't be undone.</p>
+          <label class="form-label small" for="confirmDelete">Type <b>DELETE</b> to confirm</label>
+          <input class="form-control" id="confirmDelete" autocomplete="off">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" data-bs-dismiss="modal" type="button">Keep my account</button>
+          <button class="btn btn-danger" type="button" id="doDelete" disabled>Delete everything</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+        <span>&copy; <span id="year"></span> Selfie with Parent. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <a href="#">Terms &amp; Conditions</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/features.js"></script>
+  <script src="js/account.js"></script>
+</body>
+</html>

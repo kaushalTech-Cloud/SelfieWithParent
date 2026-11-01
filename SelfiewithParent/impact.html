@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Impact | Selfie with Parent</title>
+  <meta name="description" content="See where selfies are coming from, join the school challenge, take the pledge and volunteer to visit an elder.">
+  <!-- Share previews (WhatsApp, Facebook, X) + icons -->
+  <link rel="canonical" href="https://www.selfiewithparent.org/impact.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Selfie with Parent">
+  <meta property="og:title" content="Impact | Selfie with Parent">
+  <meta property="og:description" content="See where selfies are coming from, join the school challenge, take the pledge and volunteer to visit an elder.">
+  <meta property="og:url" content="https://www.selfiewithparent.org/impact.html">
+  <meta property="og:image" content="https://www.selfiewithparent.org/img/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Selfie with Parent — They held your hand first. Now hold the camera.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a3d3e">
+  <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="img/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/i18n.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/lang.js"></script>
+  <script src="js/i18n.js"></script>
+  <link rel="stylesheet" href="css/features.css">
+</head>
+<body>
+
+  <div id="siteHeader"></div>
+  <script src="js/auth.js"></script>
+  <script src="js/nav.js"></script>
+
+  <header class="page-hero">
+    <div class="container">
+      <span class="eyebrow">Our movement in numbers</span>
+      <h1>Every selfie <em>counts</em></h1>
+      <p class="lead">Watch the campaign grow across India and the world, cheer on your school, and do something kind this week.</p>
+    </div>
+  </header>
+
+  <main class="pb-5">
+    <div class="container">
+      <div class="card-soft lift mb-4 text-center">
+        <span class="design-flag"><i class="bi bi-brush"></i> Design preview — sample numbers</span>
+        <div class="row g-3 mt-2">
+          <div class="col-6 col-md-3"><div class="pledge-count text-dark" id="kTotal">0</div><small class="text-muted">Selfies in India</small></div>
+          <div class="col-6 col-md-3"><div class="pledge-count text-dark" id="kWorld">0</div><small class="text-muted">From other countries</small></div>
+          <div class="col-6 col-md-3"><div class="pledge-count text-dark" id="kStates">0</div><small class="text-muted">States &amp; UTs taking part</small></div>
+          <div class="col-6 col-md-3"><div class="pledge-count text-dark" id="kSchools">0</div><small class="text-muted">Schools &amp; colleges</small></div>
+        </div>
+      </div>
+
+      <nav class="section-tabs" aria-label="On this page">
+        <a href="#map">Campaign map</a><a href="#schools">School challenge</a><a href="#pledge">Take the pledge</a><a href="#adopt">Adopt a Grandparent</a>
+      </nav>
+
+      <!-- Map -->
+      <section id="map" class="row g-4 mb-5">
+        <div class="col-lg-7">
+          <div class="card-soft h-100">
+            <h2 class="grid-title mb-1">Selfies across India</h2>
+            <p class="text-muted small">Tap a state to see its count. Darker means more selfies.</p>
+            <div class="tile-map" id="tileMap"></div>
+            <div class="map-legend"><span>Fewer</span><span class="bar"></span><span>More</span></div>
+            <div class="state-detail" id="stateDetail" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="card-soft mb-4">
+            <h2 class="grid-title mb-3">Top states</h2>
+            <ol class="rank-list" id="topStates"></ol>
+          </div>
+          <div class="card-soft">
+            <h2 class="grid-title mb-3">Around the world</h2>
+            <ol class="rank-list" id="topWorld"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Schools -->
+      <section id="schools" class="card-soft mb-5">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-4">
+            <span class="eyebrow text-accent">School &amp; college challenge</span>
+            <h2 class="section-title">Which campus loves its parents most?</h2>
+            <p class="text-muted">Schools and colleges register, students share selfies with a class code, and the top campus each year wins the Golden Selfie award.</p>
+            <button class="btn btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#schoolModal"><i class="bi bi-building-add"></i> Register your institution</button>
+          </div>
+          <div class="col-lg-8">
+            <div class="d-flex gap-2 mb-2" role="group" aria-label="Filter">
+              <button class="btn btn-sm btn-accent" data-filter="all" type="button">All</button>
+              <button class="btn btn-sm btn-outline-accent" data-filter="School" type="button">Schools</button>
+              <button class="btn btn-sm btn-outline-accent" data-filter="College" type="button">Colleges</button>
+            </div>
+            <ol class="rank-list" id="schoolList"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pledge -->
+      <section id="pledge" class="pledge-band mb-5">
+        <h2>Take the pledge</h2>
+        <p class="mb-0">Pick a promise you'll keep for your parents or grandparents.</p>
+        <div class="pledge-options" role="radiogroup" aria-label="Choose a pledge">
+          <label><input type="radio" name="pledge" value="call" checked><span>I'll call them every Sunday</span></label>
+          <label><input type="radio" name="pledge" value="meal"><span>I'll eat one meal a week with them</span></label>
+          <label><input type="radio" name="pledge" value="phone"><span>I'll teach them something on their phone</span></label>
+          <label><input type="radio" name="pledge" value="visit"><span>I'll visit an elder who lives alone</span></label>
+        </div>
+        <div class="pledge-count" id="pledgeCount">0</div>
+        <p class="small">people have taken the pledge</p>
+        <button class="btn btn-white" type="button" id="pledgeBtn"><i class="bi bi-hand-thumbs-up"></i> I pledge</button>
+        <p class="small mt-3 mb-0" id="pledgeDone" hidden><i class="bi bi-check-circle"></i> Thank you! Share your pledge and invite a friend.</p>
+      </section>
+
+      <!-- Adopt a grandparent -->
+      <section id="adopt" class="card-soft">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <span class="eyebrow text-accent">Volunteer</span>
+            <h2 class="section-title">Adopt a Grandparent</h2>
+            <p class="text-muted">Many elders live alone. Spend an hour a week with one near you — a chat, a walk, help with a phone call. We match you with an elder in your area.</p>
+            <ul class="contact-list">
+              <li><i class="bi bi-1-circle"></i> Tell us where you are and when you're free</li>
+              <li><i class="bi bi-2-circle"></i> We match you with an elder nearby</li>
+              <li><i class="bi bi-3-circle"></i> Visit, and share a selfie together</li>
+            </ul>
+            <div class="small text-muted"><b class="text-dark" id="visitCount">1,842</b> visits made so far</div>
+          </div>
+          <div class="col-lg-7">
+            <form class="contact-form" id="adoptForm" novalidate>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="aName">Your name</label><input class="form-control" id="aName" required></div>
+                <div class="col-md-6"><label class="form-label" for="aCity">City / area</label><input class="form-control" id="aCity" required></div>
+                <div class="col-md-6"><label class="form-label" for="aPhone">Mobile</label><input class="form-control" id="aPhone" type="tel" inputmode="numeric" required></div>
+                <div class="col-md-6">
+                  <label class="form-label" for="aWhen">When are you free?</label>
+                  <select class="form-select" id="aWhen" required>
+                    <option value="">Choose one</option>
+                    <option>Weekday mornings</option><option>Weekday evenings</option><option>Weekends</option>
+                  </select>
+                </div>
+                <div class="col-12"><label class="form-label" for="aLang">Languages you speak</label><input class="form-control" id="aLang" placeholder="e.g. Hindi, English"></div>
+                <div class="col-12"><button class="btn btn-accent" type="submit"><i class="bi bi-heart"></i> Sign me up</button></div>
+              </div>
+              <div class="form-note mt-3" role="status"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- School registration -->
+  <div class="modal fade" id="schoolModal" tabindex="-1" aria-labelledby="schoolTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content studio" id="schoolForm" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title" id="schoolTitle">Register your institution</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label" for="sName">School / college name</label><input class="form-control" id="sName" required></div>
+          <div class="mb-3"><label class="form-label" for="sCity">City</label><input class="form-control" id="sCity" required></div>
+          <div class="mb-3"><label class="form-label" for="sContact">Coordinator's email</label><input class="form-control" id="sContact" type="email" required></div>
+          <div class="form-note" role="status"></div>
+          <div class="class-code" id="classCode" hidden>
+            <div class="small text-muted">Your class code (share with students)</div>
+            <div class="pledge-count text-dark" id="codeValue"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-accent w-100" type="submit">Get our class code</button></div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+        <span>&copy; <span id="year"></span> Selfie with Parent. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <a href="#">Terms &amp; Conditions</a></span>
+      </div>
+    </div>
+  </footer>
+  <a href="#" class="back-top" aria-label="Back to top"><i class="bi bi-arrow-up"></i></a>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/features-data.js"></script>
+  <script src="js/features.js"></script>
+  <script src="js/impact.js"></script>
+</body>
+</html>
